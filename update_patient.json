@@ -1,0 +1,29 @@
+{
+    "resourceType": "Patient",
+    "id": "24322",
+    "meta": {
+        "versionId": "1",
+        "lastUpdated": "2026-09-16T07:12:33.796+00:00"
+    },
+    "identifier": [
+    {
+        "system": "http://example.org/identifiers",
+        "value": "12345"
+        }
+    ],
+    "active": true,
+    "name": [
+        {
+            "family": "Group 2",
+            "given": ["Juan", "Group 2"]
+        }
+    ],"telecom": [
+    {
+      "system": "phone",
+      "value": "+639123456789",
+      "use": "mobile"
+    }
+  ],
+    "gender": "male",
+    "birthDate": "1999-09-21"
+}
