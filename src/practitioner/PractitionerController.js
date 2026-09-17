@@ -1,30 +1,21 @@
 // Controller - Practitioner CRUD
 const FHIR_BASE = 'https://cdr.pheref.fhirlab.net/fhir';
 const PAGE_SIZE = 10;
+const LOAD_COUNT = 100;
 
-let currentPageNumber = 1;
-let nextPageUrl = null;
-let prevPageUrl = null;
+let allPractitioners = [];
+let filteredPractitioners = [];
+let currentPage = 1;
+let searchTerm = '';
+let searchDebounceTimer = null;
 
-function firstPageUrl() {
-    return `${FHIR_BASE}/Practitioner?_sort=-_lastUpdated&_count=${PAGE_SIZE}&_total=accurate`;
-}
-
-async function fetchPractitionerPage(url) {
-    const response = await fetch(url);
+async function fetchAllPractitioners() {
+    const response = await fetch(`${FHIR_BASE}/Practitioner?_sort=-_lastUpdated&_count=${LOAD_COUNT}`);
     if (!response.ok) {
         throw new Error(`Failed to load practitioners (${response.status})`);
     }
     const bundle = await response.json();
-    const links = bundle.link || [];
-    const findLink = rel => (links.find(l => l.relation === rel) || {}).url || null;
-
-    return {
-        practitioners: (bundle.entry || []).map(entry => Practitioner.fromFhirJson(entry.resource)),
-        total: typeof bundle.total === 'number' ? bundle.total : (bundle.entry || []).length,
-        nextUrl: findLink('next'),
-        prevUrl: findLink('previous') || findLink('prev')
-    };
+    return (bundle.entry || []).map(entry => Practitioner.fromFhirJson(entry.resource));
 }
 
 async function createPractitioner(practitioner) {
@@ -96,6 +87,11 @@ function renderPractitioners(practitioners) {
     const body = tableBody();
     body.innerHTML = '';
 
+    if (practitioners.length === 0) {
+        body.innerHTML = '<tr><td colspan="4" class="empty-state">No practitioners match your search.</td></tr>';
+        return;
+    }
+
     practitioners.forEach(p => {
         const fullName = [p.name && p.name.given, p.name && p.name.family].filter(Boolean).join(' ') || '(no name)';
         const qualification = (p.qualification && p.qualification.text) || '';
@@ -132,28 +128,27 @@ function paginationControls() {
     return document.getElementById('pagination-controls');
 }
 
-function renderPaginationControls(totalCount) {
-    const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+function renderPaginationControls(totalCount, totalPages) {
     const container = paginationControls();
     container.innerHTML = `
-        <span class="pagination-info">Page ${currentPageNumber} of ${totalPages} (${totalCount} total)</span>
+        <span class="pagination-info">Page ${currentPage} of ${totalPages} (${totalCount} matching)</span>
         <div class="pagination-buttons">
-            <button type="button" id="prev-page-btn" class="secondary-btn" ${prevPageUrl ? '' : 'disabled'}>Previous</button>
-            <button type="button" id="next-page-btn" class="secondary-btn" ${nextPageUrl ? '' : 'disabled'}>Next</button>
+            <button type="button" id="prev-page-btn" class="secondary-btn" ${currentPage <= 1 ? 'disabled' : ''}>Previous</button>
+            <button type="button" id="next-page-btn" class="secondary-btn" ${currentPage >= totalPages ? 'disabled' : ''}>Next</button>
         </div>
     `;
 
     document.getElementById('prev-page-btn').addEventListener('click', () => {
-        if (prevPageUrl) {
-            currentPageNumber -= 1;
-            refreshList(prevPageUrl);
+        if (currentPage > 1) {
+            currentPage -= 1;
+            renderCurrentPage();
         }
     });
 
     document.getElementById('next-page-btn').addEventListener('click', () => {
-        if (nextPageUrl) {
-            currentPageNumber += 1;
-            refreshList(nextPageUrl);
+        if (currentPage < totalPages) {
+            currentPage += 1;
+            renderCurrentPage();
         }
     });
 }
@@ -177,22 +172,58 @@ function renderSkeletonRows(rowCount = PAGE_SIZE) {
     }
 }
 
-async function refreshList(url) {
-    renderSkeletonRows();
-    if (!url) {
-        currentPageNumber = 1;
+function applyFilter() {
+    const term = searchTerm.trim().toLowerCase();
+
+    if (!term) {
+        filteredPractitioners = [...allPractitioners];
+    } else {
+        filteredPractitioners = allPractitioners.filter(p => {
+            const fullName = [p.name && p.name.given, p.name && p.name.family].filter(Boolean).join(' ').toLowerCase();
+            const qualification = ((p.qualification && p.qualification.text) || '').toLowerCase();
+            const telecom = ((p.telecom && p.telecom.value) || '').toLowerCase();
+            return fullName.includes(term) || qualification.includes(term) || telecom.includes(term);
+        });
     }
+
+    currentPage = 1;
+    renderCurrentPage();
+}
+
+function renderCurrentPage() {
+    const total = filteredPractitioners.length;
+    const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+    if (currentPage > totalPages) {
+        currentPage = totalPages;
+    }
+    const start = (currentPage - 1) * PAGE_SIZE;
+    const pageItems = filteredPractitioners.slice(start, start + PAGE_SIZE);
+    renderPractitioners(pageItems);
+    renderPaginationControls(total, totalPages);
+}
+
+async function loadPractitioners() {
+    renderSkeletonRows();
     try {
-        const { practitioners, total, nextUrl, prevUrl } = await fetchPractitionerPage(url || firstPageUrl());
-        nextPageUrl = nextUrl;
-        prevPageUrl = prevUrl;
-        renderPractitioners(practitioners);
-        renderPaginationControls(total);
+        allPractitioners = await fetchAllPractitioners();
+        applyFilter();
     } catch (err) {
         showStatus(err.message, true);
         tableBody().innerHTML = '';
         paginationControls().innerHTML = '';
     }
+}
+
+function handleSearchInput(event) {
+    searchTerm = event.target.value;
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(applyFilter, 250);
+}
+
+function handleClearSearch() {
+    searchTerm = '';
+    document.getElementById('practitioner-search').value = '';
+    applyFilter();
 }
 
 async function handleDelete(id) {
@@ -203,7 +234,7 @@ async function handleDelete(id) {
         await deletePractitioner(id);
         showStatus('Practitioner deleted.');
         resetForm();
-        await refreshList();
+        await loadPractitioners();
     } catch (err) {
         showStatus(err.message, true);
     }
@@ -238,7 +269,7 @@ async function handleSubmit(event) {
             showStatus('Practitioner created.');
         }
         resetForm();
-        await refreshList();
+        await loadPractitioners();
     } catch (err) {
         showStatus(err.message, true);
     }
@@ -247,5 +278,7 @@ async function handleSubmit(event) {
 document.addEventListener('DOMContentLoaded', () => {
     form().addEventListener('submit', handleSubmit);
     document.getElementById('cancel-btn').addEventListener('click', resetForm);
-    refreshList();
+    document.getElementById('practitioner-search').addEventListener('input', handleSearchInput);
+    document.getElementById('clear-search-btn').addEventListener('click', handleClearSearch);
+    loadPractitioners();
 });
