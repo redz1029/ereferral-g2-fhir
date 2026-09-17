@@ -67,125 +67,25 @@ async function loadPatients() {
 
     try {
 
-        /*
-         * FHIR Patient search is paginated.
-         *
-         * Instead of reading only the first 100 patients,
-         * keep following Bundle.link[relation="next"]
-         * until there are no more pages.
-         */
+        const response = await fetch(`${FHIR_BASE_URL}/Patient?_count=25`, {
+            method: "GET",
+            headers: { "Accept": "application/fhir+json" }
+        });
 
-        let nextUrl =
-            `${FHIR_BASE_URL}/Patient?_count=100`;
-
-        const patients = [];
-
-
-        while (nextUrl) {
-
-            console.log(
-                "FHIR Patient Directory:",
-                nextUrl
-            );
-
-
-            const response =
-                await fetch(
-                    nextUrl,
-                    {
-                        method: "GET",
-
-                        headers: {
-                            "Accept":
-                                "application/fhir+json"
-                        }
-                    }
-                );
-
-
-            if (!response.ok) {
-
-                throw new Error(
-                    `FHIR Server returned HTTP ${response.status}`
-                );
-
-            }
-
-
-            const bundle =
-                await response.json();
-
-
-            if (
-                bundle.resourceType !==
-                "Bundle"
-            ) {
-
-                throw new Error(
-                    "FHIR response is not a Patient Bundle."
-                );
-
-            }
-
-
-            /*
-             * Add patients from this page.
-             */
-
-            (bundle.entry || [])
-                .forEach(
-                    entry => {
-
-                        const resource =
-                            entry.resource;
-
-
-                        if (
-                            resource?.resourceType ===
-                            "Patient"
-                        ) {
-
-                            patients.push(
-                                resource
-                            );
-
-                        }
-
-                    }
-                );
-
-
-            /*
-             * Find the next FHIR page.
-             *
-             * Example:
-             *
-             * Bundle.link = [
-             *   {
-             *      relation: "self",
-             *      url: "..."
-             *   },
-             *   {
-             *      relation: "next",
-             *      url: "..."
-             *   }
-             * ]
-             */
-
-            const nextLink =
-                (bundle.link || [])
-                    .find(
-                        link =>
-                            link.relation ===
-                            "next"
-                    );
-
-
-            nextUrl =
-                nextLink?.url ||
-                null;
-
+        if (!response.ok) {
+            throw new Error(`FHIR Server returned HTTP ${response.status}`);
         }
+
+        const bundle = await response.json();
+        if (bundle.resourceType !== "Bundle") {
+            throw new Error("FHIR response is not a Patient Bundle.");
+        }
+
+        const patients = (bundle.entry || [])
+            .map(entry => entry.resource)
+            .filter(resource => resource?.resourceType === "Patient");
+        const nextLink = (bundle.link || []).find(link => link.relation === "next");
+        nextPatientsUrl = nextLink?.url || null;
 
 
         /*
@@ -424,7 +324,7 @@ async function loadPatients() {
 
                 <div class="status">
 
-                    FHIR Patient resources loaded:
+                    FHIR Patient resources loaded in this view:
                     <strong>
                         ${allPatients.length}
                     </strong>

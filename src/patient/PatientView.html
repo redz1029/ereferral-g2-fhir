@@ -493,21 +493,33 @@
                 width: 180px;
             }
         }
+        .command-header { background: #102a43; border-bottom: 4px solid #18a88f; color: white; padding: 14px clamp(20px, 4vw, 58px); }
+        .command-header .header-container { max-width: 1320px; gap: 20px; }
+        .command-brand { align-items: center; display: flex; gap: 11px; }
+        .command-brand-mark { align-items: center; background: #18a88f; border-radius: 11px; display: flex; font-size: 23px; font-weight: bold; height: 43px; justify-content: center; width: 43px; }
+        .command-brand h1 { color: white; font-size: 14px; letter-spacing: .08em; margin: 0; }
+        .command-brand p { color: #91a9bc; font-size: 11px; margin: 3px 0 0; }
+        .command-nav { align-items: center; display: flex; flex: 1 1 auto; gap: 17px; overflow-x: auto; }
+        .command-group { align-items: center; border-left: 1px solid rgba(255,255,255,.16); display: flex; gap: 4px; padding-left: 17px; }
+        .command-label { color: #7891a5; font-size: 9px; font-weight: bold; letter-spacing: .13em; margin-right: 5px; text-transform: uppercase; white-space: nowrap; }
+        .command-link { align-items: center; background: transparent; border: 1px solid transparent; border-radius: 7px; color: #c9d7e2; display: inline-flex; font-size: 13px; gap: 6px; padding: 9px 10px; text-decoration: none; white-space: nowrap; }
+        .command-link:hover, .command-link.active { background: #1f4b61; border-color: #35667b; color: white; }
+        .command-status { align-items: center; color: #a9c0ca; display: flex; font-size: 11px; gap: 7px; white-space: nowrap; }
+        .command-status::before { background: #48d2ad; border-radius: 50%; box-shadow: 0 0 0 4px rgba(72,210,173,.12); content: ''; height: 8px; width: 8px; }
+        @media (max-width: 900px) { .command-header .header-container { align-items: flex-start; } .command-nav { flex-basis: 100%; order: 3; } .command-group { border-left: 0; padding-left: 0; } }
+        @media (max-width: 560px) { .command-label { display: none; } .command-status { margin-left: auto; } }
     </style>
 </head>
 
 <body>
-    <header>
+    <header class="command-header">
         <div class="header-container">
-            <h1>e-Referral Group 2 FHIR</h1>
-            <nav aria-label="Main Navigation">
-                <a href="../../index.html" class="nav-btn nav-btn-secondary">&larr; Back to Home</a>
-                <a href="PatientView.html" class="nav-btn" id="btn-patient">Patient</a>
-                <a href="../Organization/OrganizationView.html" class="nav-btn" id="btn-organization">Organization</a>
-                <a href="../practitioner/PractitionerView.html" class="nav-btn" id="btn-practitioners">Practitioner</a>
-                <a href="../practitioner_roles/index.html" class="nav-btn" id="btn-practitioner-roles">Practitioner Roles</a>
-                <a href="../referral/index.html" class="nav-btn" id="btn-referrals">e-Referral</a>
+            <div class="command-brand"><div class="command-brand-mark">+</div><div><h1>E-REFERRAL FHIR</h1><p>Group 2 workspace</p></div></div>
+            <nav class="command-nav" aria-label="Main Navigation">
+                <div class="command-group"><span class="command-label">Workspace</span><a href="../../index.html" class="command-link">⌂ Home</a><a href="../referral/index.html" class="command-link">↗ e-Referral</a></div>
+                <div class="command-group"><span class="command-label">Directories</span><a href="PatientView.html" id="btn-patient" class="command-link active">♙ Patients</a><a href="../Organization/OrganizationView.html" class="command-link">▦ Organizations</a><a href="../practitioner/PractitionerView.html" class="command-link">⚕ Practitioners</a><a href="../practitioner_roles/index.html" class="command-link">▤ Practitioner Rules</a></div>
             </nav>
+            <div class="command-status">FHIR R4 connected</div>
         </div>
     </header>
 
