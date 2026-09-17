@@ -4,101 +4,3518 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>e-Referral Group 2 FHIR</title>
-    <style>
-        :root {
-            --primary-color: #2563eb;
-            --primary-hover: #1d4ed8;
-            --bg-color: #f8fafc;
-            --nav-bg: #ffffff;
-            --text-color: #1e293b;
-            --border-color: #e2e8f0;
-        }
 
+    <style>
         * {
             box-sizing: border-box;
-            margin: 0;
-            padding: 0;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            line-height: 1.5;
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            color: #1f2937;
         }
 
         header {
-            background-color: var(--nav-bg);
-            border-bottom: 1px solid var(--border-color);
-            padding: 1rem 2rem;
-            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+            background: #ffffff;
+            border-bottom: 1px solid #ddd;
+            padding: 18px 30px;
         }
 
         .header-container {
             max-width: 1200px;
-            margin: 0 auto;
+            margin: auto;
             display: flex;
-            align-items: center;
             justify-content: space-between;
+            align-items: center;
+            gap: 20px;
             flex-wrap: wrap;
-            gap: 1rem;
         }
 
         h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: var(--text-color);
+            margin: 0;
+            font-size: 22px;
         }
 
         nav {
             display: flex;
-            gap: 0.75rem;
+            gap: 8px;
             flex-wrap: wrap;
         }
 
         .nav-btn {
-            background-color: var(--primary-color);
-            color: #ffffff;
             border: none;
-            padding: 0.5rem 1.25rem;
-            font-size: 0.95rem;
-            font-weight: 500;
-            border-radius: 0.375rem;
+            background: #2563eb;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 5px;
             cursor: pointer;
-            transition: background-color 0.2s ease, transform 0.1s ease;
-            text-decoration: none;
-            display: inline-block;
+            font-size: 14px;
         }
 
         .nav-btn:hover {
-            background-color: var(--primary-hover);
-        }
-
-        .nav-btn:active {
-            transform: translateY(1px);
+            background: #1d4ed8;
         }
 
         main {
-            max-width: 1200px;
-            margin: 2rem auto;
-            padding: 0 2rem;
+            max-width: 1250px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .page-header h2 {
+            margin: 0 0 5px;
+            font-size: 22px;
+        }
+
+        .page-header p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .entries-control {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 14px;
+        }
+
+        .entries-control select,
+        .search-input {
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            padding: 9px 10px;
+            background: white;
+            font-size: 14px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 14px;
+        }
+
+        .search-input {
+            width: 240px;
+        }
+
+        .btn {
+            border: none;
+            padding: 9px 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-edit {
+            background: #eef2ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+        }
+
+        .btn-edit:hover {
+            background: #e0e7ff;
+        }
+
+        .btn-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .btn-danger:hover {
+            background: #fee2e2;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* TABLE */
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1050px;
+        }
+
+        thead {
+            background: #f8fafc;
+        }
+
+        th {
+            text-align: left;
+            padding: 13px 12px;
+            font-size: 12px;
+            color: #475569;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 13px 12px;
+            font-size: 13px;
+            border-bottom: 1px solid #eef2f7;
+            vertical-align: middle;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .fhir-id {
+            display: inline-block;
+            padding: 4px 8px;
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .patient-name {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .sub-text {
+            display: block;
+            margin-top: 3px;
+            color: #6b7280;
+            font-size: 11px;
+        }
+
+        .gender-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .gender-male {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .gender-female {
+            background: #fce7f3;
+            color: #be185d;
+        }
+
+        .gender-other,
+        .gender-unknown {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 45px 20px;
+            color: #6b7280;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 45px;
+            color: #6b7280;
+        }
+
+        .status {
+            padding: 12px 15px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .error {
+            padding: 15px;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            border-radius: 5px;
+        }
+
+        /* PAGINATION */
+
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .showing-info {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .page-btn {
+            min-width: 34px;
+            height: 34px;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #374151;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #f3f4f6;
+        }
+
+        .page-btn.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        /* MODAL */
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .close-btn {
+            border: none;
+            background: transparent;
+            font-size: 25px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .modal-body {
+            padding: 22px;
+        }
+
+        .modal-footer {
+            padding: 15px 22px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-section h3 {
+            margin: 0 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 15px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            background: white;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .form-note {
+            color: #6b7280;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .readonly {
+            background: #f3f4f6 !important;
+            color: #6b7280;
+        }
+
+        @media (max-width: 700px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+
+            .search-input {
+                width: 180px;
+            }
         }
     </style>
 </head>
+
 <body>
-    <header>
-        <div class="header-container">
-            <h1>e-Referral Group 2 FHIR</h1>
-            <nav aria-label="Main Navigation">
-                <button class="nav-btn" id="btn-patient">Patient</button>
-                <button class="nav-btn" id="btn-organization">Organization</button>
-                <button class="nav-btn" id="btn-practitioners">Practitioners</button>
-                <button class="nav-btn" id="btn-practitioner-roles">Practitioner Roles</button>
-            </nav>
+
+<header>
+    <div class="header-container">
+
+        <h1>e-Referral Group 2 FHIR</h1>
+
+        <nav>
+            <button class="nav-btn" id="btn-patient">
+                Patient
+            </button>
+
+            <button class="nav-btn">
+                Organization
+            </button>
+
+            <button class="nav-btn">
+                Practitioners
+            </button>
+
+            <button class="nav-btn">
+                Practitioner Roles
+            </button>
+        </nav>
+
+    </div>
+</header>
+
+
+<main>
+
+    <div id="content">
+
+        <div class="card">
+
+            <h2>FHIR e-Referral Demo</h2>
+
+            <p>
+                Click <strong>Patient</strong> to load the
+                Patient Directory.
+            </p>
+
         </div>
-    </header>
-    <main>
-        <!-- Content sections can be loaded or rendered here -->
-    </main>
+
+    </div>
+
+</main>
+
+
+<!-- ==========================================================
+     PATIENT MODAL
+========================================================== -->
+
+<div class="modal-overlay" id="patientModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 id="modalTitle">
+                Add Patient
+            </h2>
+
+            <button
+                type="button"
+                class="close-btn"
+                id="closeModal">
+                &times;
+            </button>
+
+        </div>
+
+
+        <form id="patientForm">
+
+            <div class="modal-body">
+
+                <!-- PERSONAL INFORMATION -->
+
+                <div class="form-section">
+
+                    <h3>Personal Information</h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>
+                                First Name
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="firstName"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Middle Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="middleName"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Last Name
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="lastName"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Gender
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="gender"
+                                required>
+
+                                <option value="">
+                                    Select Gender
+                                </option>
+
+                                <option value="male">
+                                    Male
+                                </option>
+
+                                <option value="female">
+                                    Female
+                                </option>
+
+                                <option value="other">
+                                    Other
+                                </option>
+
+                                <option value="unknown">
+                                    Unknown
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Birth Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="birthDate"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Phone
+                            </label>
+
+                            <input
+                                type="text"
+                                id="phone"
+                                placeholder="+639XXXXXXXXX"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ADDRESS -->
+
+                <div class="form-section">
+
+                    <h3>Address</h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>
+                                Region
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="region"
+                                required>
+
+                                <option value="">
+                                    Select Region
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Province
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="province"
+                                required
+                                disabled>
+
+                                <option value="">
+                                    Select Province
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Municipality / City
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="municipality"
+                                required
+                                disabled>
+
+                                <option value="">
+                                    Select Municipality / City
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Barangay
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="barangay"
+                                required
+                                disabled>
+
+                                <option value="">
+                                    Select Barangay
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Address
+                            </label>
+
+                            <input
+                                type="text"
+                                id="addressLine"
+                                placeholder="House No., Street, etc."
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Postal Code
+                            </label>
+
+                            <input
+                                type="text"
+                                id="postalCode"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Country
+                            </label>
+
+                            <input
+                                type="text"
+                                id="country"
+                                value="PH"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- FHIR ID -->
+
+                <div
+                    class="form-section"
+                    id="editIdSection"
+                    style="display:none;">
+
+                    <h3>FHIR Resource</h3>
+
+                    <div class="form-group">
+
+                        <label>
+                            FHIR ID
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editPatientId"
+                            class="readonly"
+                            readonly
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="cancelModal">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="savePatientBtn">
+                    Save Patient
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<script>
+
+    // ==========================================================
+    // CONFIGURATION
+    // ==========================================================
+
+    const FHIR_BASE_URL =
+        "https://cdr.pheref.fhirlab.net/fhir";
+
+
+    const PSGC_SYSTEM =
+        "https://psa.gov.ph/classification/psgc";
+
+
+    const EXTENSION_URLS = {
+
+        region:
+            "https://fhir.doh.gov.ph/phcore/StructureDefinition/region",
+
+        province:
+            "https://fhir.doh.gov.ph/phcore/StructureDefinition/province",
+
+        municipality:
+            "https://fhir.doh.gov.ph/phcore/StructureDefinition/city-municipality",
+
+        barangay:
+            "https://fhir.doh.gov.ph/phcore/StructureDefinition/barangay"
+
+    };
+
+
+    // ==========================================================
+    // PSGC API
+    // ==========================================================
+    // Third-party static API generated from PSA PSGC data.
+    // FHIR still stores the official 10-digit PSGC codes.
+    const PSGC_API_BASE = "https://psgc.gitlab.io/api";
+
+    const PSGC_CACHE = {
+        regions: null,
+        provinces: new Map(),
+        municipalities: new Map(),
+        barangays: new Map()
+    };
+
+
+    // ==========================================================
+    // STATE
+    // ==========================================================
+
+    let allPatients = [];
+
+    let filteredPatients = [];
+
+    // Current text in the Patient Directory search box.
+    let patientSearchTerm = "";
+
+    let currentPage = 1;
+
+    let pageSize = 10;
+
+    let editingPatient = null;
+    let isSavingPatient = false;
+
+
+    // ==========================================================
+    // INITIAL LOAD
+    // ==========================================================
+
+    document
+        .getElementById("btn-patient")
+        .addEventListener(
+            "click",
+            loadPatients
+        );
+
+
+   // ==========================================================
+// LOAD PATIENT DIRECTORY
+// ==========================================================
+
+async function loadPatients() {
+
+    const content =
+        document.getElementById("content");
+
+
+    content.innerHTML = `
+
+        <div class="card">
+
+            <div class="loading">
+                Loading Patient Directory...
+            </div>
+
+        </div>
+
+    `;
+
+
+    try {
+
+        /*
+         * FHIR Patient search is paginated.
+         *
+         * Instead of reading only the first 100 patients,
+         * keep following Bundle.link[relation="next"]
+         * until there are no more pages.
+         */
+
+        let nextUrl =
+            `${FHIR_BASE_URL}/Patient?_count=100`;
+
+        const patients = [];
+
+
+        while (nextUrl) {
+
+            console.log(
+                "FHIR Patient Directory:",
+                nextUrl
+            );
+
+
+            const response =
+                await fetch(
+                    nextUrl,
+                    {
+                        method: "GET",
+
+                        headers: {
+                            "Accept":
+                                "application/fhir+json"
+                        }
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `FHIR Server returned HTTP ${response.status}`
+                );
+
+            }
+
+
+            const bundle =
+                await response.json();
+
+
+            if (
+                bundle.resourceType !==
+                "Bundle"
+            ) {
+
+                throw new Error(
+                    "FHIR response is not a Patient Bundle."
+                );
+
+            }
+
+
+            /*
+             * Add patients from this page.
+             */
+
+            (bundle.entry || [])
+                .forEach(
+                    entry => {
+
+                        const resource =
+                            entry.resource;
+
+
+                        if (
+                            resource?.resourceType ===
+                            "Patient"
+                        ) {
+
+                            patients.push(
+                                resource
+                            );
+
+                        }
+
+                    }
+                );
+
+
+            /*
+             * Find the next FHIR page.
+             *
+             * Example:
+             *
+             * Bundle.link = [
+             *   {
+             *      relation: "self",
+             *      url: "..."
+             *   },
+             *   {
+             *      relation: "next",
+             *      url: "..."
+             *   }
+             * ]
+             */
+
+            const nextLink =
+                (bundle.link || [])
+                    .find(
+                        link =>
+                            link.relation ===
+                            "next"
+                    );
+
+
+            nextUrl =
+                nextLink?.url ||
+                null;
+
+        }
+
+
+        /*
+         * Replace the directory data with ALL
+         * Patient resources retrieved from the
+         * paginated FHIR search.
+         */
+
+        allPatients =
+            patients;
+
+
+        /*
+         * If the directory is loaded again after
+         * Add / Update / Delete, preserve the
+         * current search text.
+         */
+
+        const search =
+            patientSearchTerm
+                .trim()
+                .toLowerCase();
+
+
+        if (!search) {
+
+            filteredPatients =
+                [...allPatients];
+
+        } else {
+
+            filteredPatients =
+                allPatients.filter(
+                    patient => {
+
+                        const name =
+                            getPatientName(
+                                patient
+                            ).toLowerCase();
+
+
+                        const identifier =
+                            (
+                                patient.identifier?.[0]?.value ||
+                                ""
+                            ).toLowerCase();
+
+
+                        const gender =
+                            (
+                                patient.gender ||
+                                ""
+                            ).toLowerCase();
+
+
+                        const birthDate =
+                            (
+                                patient.birthDate ||
+                                ""
+                            ).toLowerCase();
+
+
+                        const address =
+                            getAddressSummary(
+                                patient
+                            ).toLowerCase();
+
+
+                        const fhirId =
+                            (
+                                patient.id ||
+                                ""
+                            ).toLowerCase();
+
+
+                        return (
+
+                            fhirId.includes(search) ||
+
+                            name.includes(search) ||
+
+                            identifier.includes(search) ||
+
+                            gender.includes(search) ||
+
+                            birthDate.includes(search) ||
+
+                            address.includes(search)
+
+                        );
+
+                    }
+                );
+
+        }
+
+
+        currentPage =
+            1;
+
+
+        renderPatientDirectory();
+
+
+    } catch (error) {
+
+        console.error(
+            error
+        );
+
+
+        content.innerHTML = `
+
+            <div class="card">
+
+                <div class="error">
+
+                    <strong>
+                        Failed to load Patient Directory
+                    </strong>
+
+                    <br><br>
+
+                    ${escapeHtml(
+                        error.message
+                    )}
+
+                    <br><br>
+
+                    <strong>
+                        Endpoint:
+                    </strong>
+
+                    <br>
+
+                    <code>
+                        ${escapeHtml(
+                            `${FHIR_BASE_URL}/Patient`
+                        )}
+                    </code>
+
+                </div>
+
+            </div>
+
+        `;
+
+    }
+
+}
+    // ==========================================================
+    // RENDER DIRECTORY
+    // ==========================================================
+
+    function renderPatientDirectory() {
+
+        const content =
+            document.getElementById("content");
+
+
+        const total =
+            filteredPatients.length;
+
+
+        const totalPages =
+            Math.max(
+                1,
+                Math.ceil(
+                    total / pageSize
+                )
+            );
+
+
+        if (
+            currentPage >
+            totalPages
+        ) {
+
+            currentPage =
+                totalPages;
+
+        }
+
+
+        const start =
+            (currentPage - 1) *
+            pageSize;
+
+
+        const end =
+            Math.min(
+                start + pageSize,
+                total
+            );
+
+
+        const pagePatients =
+            filteredPatients.slice(
+                start,
+                end
+            );
+
+
+        content.innerHTML = `
+
+            <div class="card">
+
+                <!-- HEADER -->
+
+                <div class="page-header">
+
+                    <div>
+
+                        <h2>
+                            Patient Directory
+                        </h2>
+
+                        <p>
+                            Manage registered patient records,
+                            demographics, and identifiers.
+                        </p>
+
+                    </div>
+
+
+                    <button
+                        class="btn btn-primary"
+                        onclick="openAddPatientModal()">
+                        + Add Patient
+                    </button>
+
+                </div>
+
+
+                <!-- STATUS -->
+
+                <div class="status">
+
+                    FHIR Patient resources loaded:
+                    <strong>
+                        ${allPatients.length}
+                    </strong>
+
+                </div>
+
+
+                <!-- TOOLBAR -->
+
+                <div class="toolbar">
+
+                    <div class="entries-control">
+
+                        <span>
+                            Show
+                        </span>
+
+                        <select
+                            id="pageSizeSelect">
+
+                            <option value="10"
+                                ${pageSize === 10 ? "selected" : ""}>
+                                10
+                            </option>
+
+                            <option value="25"
+                                ${pageSize === 25 ? "selected" : ""}>
+                                25
+                            </option>
+
+                            <option value="50"
+                                ${pageSize === 50 ? "selected" : ""}>
+                                50
+                            </option>
+
+                            <option value="100"
+                                ${pageSize === 100 ? "selected" : ""}>
+                                100
+                            </option>
+
+                        </select>
+
+                        <span>
+                            entries
+                        </span>
+
+                    </div>
+
+
+                    <div class="search-box">
+
+                        <label>
+                            Search:
+                        </label>
+
+                        <input
+                            type="text"
+                            class="search-input"
+                            id="patientSearch"
+                            placeholder="Search patient..."
+                            value="${escapeHtml(patientSearchTerm)}"
+                        >
+
+                    </div>
+
+                </div>
+
+
+                <!-- TABLE -->
+
+                <div class="table-wrapper">
+
+                    <table>
+
+                        <thead>
+
+                            <tr>
+
+                                <th>
+                                    #
+                                </th>
+
+                                <th>
+                                    FHIR ID
+                                </th>
+
+                                <th>
+                                    PATIENT NAME
+                                </th>
+
+                                <th>
+                                    GENDER
+                                </th>
+
+                                <th>
+                                    BIRTH DATE / AGE
+                                </th>
+
+                                <th>
+                                    IDENTIFIER
+                                </th>
+
+                                <th>
+                                    ADDRESS & CONTACT
+                                </th>
+
+                                <th>
+                                    ACTION
+                                </th>
+
+                            </tr>
+
+                        </thead>
+
+
+                        <tbody id="patientTableBody">
+
+                            ${renderPatientRows(
+                                pagePatients,
+                                start
+                            )}
+
+                        </tbody>
+
+                    </table>
+
+                </div>
+
+
+                <!-- FOOTER -->
+
+                <div class="table-footer">
+
+                    <div
+                        class="showing-info"
+                        id="showingInfo">
+
+                        ${getShowingText(
+                            start,
+                            end,
+                            total
+                        )}
+
+                    </div>
+
+
+                    <div
+                        class="pagination"
+                        id="pagination">
+
+                        ${renderPagination(
+                            totalPages
+                        )}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+
+        // Search
+
+        document
+            .getElementById("patientSearch")
+            .addEventListener(
+                "input",
+                handleSearch
+            );
+
+
+        // Page size
+
+        document
+            .getElementById("pageSizeSelect")
+            .addEventListener(
+                "change",
+                function () {
+
+                    pageSize =
+                        Number(
+                            this.value
+                        );
+
+                    currentPage =
+                        1;
+
+                    renderPatientDirectory();
+
+                }
+            );
+
+    }
+
+
+    // ==========================================================
+    // TABLE ROWS
+    // ==========================================================
+
+    function renderPatientRows(
+        patients,
+        startIndex
+    ) {
+
+        if (
+            patients.length === 0
+        ) {
+
+            return `
+
+                <tr>
+
+                    <td
+                        colspan="8"
+                        class="empty-state">
+
+                        No patients found.
+
+                    </td>
+
+                </tr>
+
+            `;
+
+        }
+
+
+        return patients
+            .map(
+                (patient, index) => {
+
+                    const name =
+                        getPatientName(
+                            patient
+                        );
+
+
+                    const gender =
+                        patient.gender ||
+                        "unknown";
+
+
+                    const birthDate =
+                        patient.birthDate ||
+                        "N/A";
+
+
+                    const age =
+                        calculateAge(
+                            patient.birthDate
+                        );
+
+
+                    const identifier =
+                        patient.identifier?.[0]?.value ||
+                        "N/A";
+
+
+                    const address =
+                        getAddressSummary(
+                            patient
+                        );
+
+
+                    const phone =
+                        patient.telecom?.find(
+                            telecom =>
+                                telecom.system ===
+                                "phone"
+                        )?.value ||
+                        "N/A";
+
+
+                    const genderClass =
+                        `gender-${gender}`;
+
+
+                    return `
+
+                        <tr>
+
+                            <td>
+                                ${startIndex + index + 1}
+                            </td>
+
+
+                            <td>
+
+                                <span class="fhir-id">
+                                    #${escapeHtml(
+                                        patient.id ||
+                                        "N/A"
+                                    )}
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <span class="patient-name">
+                                    ${escapeHtml(
+                                        name
+                                    )}
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <span
+                                    class="gender-badge ${genderClass}">
+
+                                    ${escapeHtml(
+                                        capitalize(
+                                            gender
+                                        )
+                                    )}
+
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <strong>
+                                    ${escapeHtml(
+                                        birthDate
+                                    )}
+                                </strong>
+
+                                ${
+                                    age !== null
+                                        ? `
+                                            <span class="sub-text">
+                                                (${age} years old)
+                                            </span>
+                                          `
+                                        : ""
+                                }
+
+                            </td>
+
+
+                            <td>
+
+                                <span
+                                    class="sub-text"
+                                    style="margin-top:0;">
+
+                                    ${escapeHtml(
+                                        identifier
+                                    )}
+
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <span>
+                                    ${escapeHtml(
+                                        address
+                                    )}
+                                </span>
+
+                                <span class="sub-text">
+                                    ☎ ${escapeHtml(phone)}
+                                </span>
+
+                            </td>
+
+
+                            <td>
+
+                                <div class="action-buttons">
+
+                                    <button
+                                        class="btn btn-edit"
+                                        onclick="openEditPatient('${escapeJs(
+                                            patient.id
+                                        )}')">
+
+                                        Edit
+
+                                    </button>
+
+
+                                    <button
+                                        class="btn btn-danger"
+                                        onclick="deletePatientById('${escapeJs(
+                                            patient.id
+                                        )}')">
+
+                                        Delete
+
+                                    </button>
+
+                                </div>
+
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                }
+            )
+            .join("");
+
+    }
+
+
+    // ==========================================================
+    // SEARCH
+    // ==========================================================
+
+    function handleSearch(
+        event
+    ) {
+
+        // Keep the search text in state so re-renders do not erase it.
+        patientSearchTerm = event.target.value;
+
+        const search =
+            patientSearchTerm
+                .trim()
+                .toLowerCase();
+
+
+        if (!search) {
+
+            filteredPatients =
+                [...allPatients];
+
+        } else {
+
+            filteredPatients =
+                allPatients.filter(
+                    patient => {
+
+                        const name =
+                            getPatientName(
+                                patient
+                            ).toLowerCase();
+
+
+                        const identifier =
+                            (
+                                patient.identifier?.[0]?.value ||
+                                ""
+                            ).toLowerCase();
+
+
+                        const gender =
+                            (
+                                patient.gender ||
+                                ""
+                            ).toLowerCase();
+
+
+                        const birthDate =
+                            (
+                                patient.birthDate ||
+                                ""
+                            ).toLowerCase();
+
+
+                        const address =
+                            getAddressSummary(
+                                patient
+                            ).toLowerCase();
+
+
+                        return (
+
+                            name.includes(search) ||
+
+                            identifier.includes(search) ||
+
+                            gender.includes(search) ||
+
+                            birthDate.includes(search) ||
+
+                            address.includes(search)
+
+                        );
+
+                    }
+                );
+
+        }
+
+
+        currentPage =
+            1;
+
+        // IMPORTANT:
+        // Do NOT call renderPatientDirectory() here.
+        // That recreates the <input> while the user is typing,
+        // causing focus/cursor loss after the first character.
+        // Only update the parts that actually changed.
+        updatePatientDirectoryResults();
+
+    }
+
+
+    function updatePatientDirectoryResults() {
+
+        const total =
+            filteredPatients.length;
+
+        const totalPages =
+            Math.max(
+                1,
+                Math.ceil(
+                    total / pageSize
+                )
+            );
+
+        if (currentPage > totalPages) {
+            currentPage = totalPages;
+        }
+
+        const start =
+            (currentPage - 1) * pageSize;
+
+        const end =
+            Math.min(
+                start + pageSize,
+                total
+            );
+
+        const pagePatients =
+            filteredPatients.slice(
+                start,
+                end
+            );
+
+        const tbody =
+            document.getElementById(
+                "patientTableBody"
+            );
+
+        if (tbody) {
+            tbody.innerHTML =
+                renderPatientRows(
+                    pagePatients,
+                    start
+                );
+        }
+
+        const showingInfo =
+            document.getElementById(
+                "showingInfo"
+            );
+
+        if (showingInfo) {
+            showingInfo.textContent =
+                getShowingText(
+                    start,
+                    end,
+                    total
+                );
+        }
+
+        const pagination =
+            document.getElementById(
+                "pagination"
+            );
+
+        if (pagination) {
+            pagination.innerHTML =
+                renderPagination(
+                    totalPages
+                );
+        }
+
+    }
+
+
+    // ==========================================================
+    // PAGINATION
+    // ==========================================================
+
+    function renderPagination(
+        totalPages
+    ) {
+
+        if (
+            totalPages <= 1
+        ) {
+
+            return "";
+
+        }
+
+
+        let html = "";
+
+
+        html += `
+
+            <button
+                class="page-btn"
+                onclick="goToPage(${currentPage - 1})"
+                ${currentPage === 1 ? "disabled" : ""}>
+
+                Previous
+
+            </button>
+
+        `;
+
+
+        const maxVisible =
+            5;
+
+
+        let startPage =
+            Math.max(
+                1,
+                currentPage -
+                Math.floor(
+                    maxVisible / 2
+                )
+            );
+
+
+        let endPage =
+            Math.min(
+                totalPages,
+                startPage +
+                maxVisible -
+                1
+            );
+
+
+        if (
+            endPage -
+            startPage +
+            1 <
+            maxVisible
+        ) {
+
+            startPage =
+                Math.max(
+                    1,
+                    endPage -
+                    maxVisible +
+                    1
+                );
+
+        }
+
+
+        for (
+            let page = startPage;
+            page <= endPage;
+            page++
+        ) {
+
+            html += `
+
+                <button
+                    class="page-btn ${
+                        page === currentPage
+                            ? "active"
+                            : ""
+                    }"
+                    onclick="goToPage(${page})">
+
+                    ${page}
+
+                </button>
+
+            `;
+
+        }
+
+
+        html += `
+
+            <button
+                class="page-btn"
+                onclick="goToPage(${currentPage + 1})"
+                ${
+                    currentPage === totalPages
+                        ? "disabled"
+                        : ""
+                }>
+
+                Next
+
+            </button>
+
+        `;
+
+
+        return html;
+
+    }
+
+
+    function goToPage(
+        page
+    ) {
+
+        const totalPages =
+            Math.max(
+                1,
+                Math.ceil(
+                    filteredPatients.length /
+                    pageSize
+                )
+            );
+
+
+        if (
+            page < 1 ||
+            page > totalPages
+        ) {
+
+            return;
+
+        }
+
+
+        currentPage =
+            page;
+
+
+        renderPatientDirectory();
+
+    }
+
+
+    function getShowingText(
+        start,
+        end,
+        total
+    ) {
+
+        if (
+            total === 0
+        ) {
+
+            return "Showing 0 entries";
+
+        }
+
+
+        return `Showing ${
+            start + 1
+        } to ${
+            end
+        } of ${
+            total
+        } entries`;
+
+    }
+
+
+    // ==========================================================
+    // ADD PATIENT
+    // ==========================================================
+
+    async function openAddPatientModal() {
+
+        editingPatient =
+            null;
+
+
+        document.getElementById(
+            "modalTitle"
+        ).textContent =
+            "Add Patient";
+
+
+        document.getElementById(
+            "savePatientBtn"
+        ).textContent =
+            "Save Patient";
+
+
+        document.getElementById(
+            "editIdSection"
+        ).style.display =
+            "none";
+
+
+        document
+            .getElementById("patientForm")
+            .reset();
+
+
+        document.getElementById(
+            "country"
+        ).value =
+            "PH";
+
+
+        initializeRegions();
+
+
+        document.getElementById(
+            "patientModal"
+        ).classList.add(
+            "active"
+        );
+
+    }
+
+
+    // ==========================================================
+    // EDIT PATIENT
+    // ==========================================================
+
+    async function openEditPatient(
+        patientId
+    ) {
+
+        try {
+
+            const response =
+                await fetch(
+                    `${FHIR_BASE_URL}/Patient/${encodeURIComponent(patientId)}`,
+                    {
+
+                        method: "GET",
+
+                        headers: {
+                            "Accept":
+                                "application/fhir+json"
+                        }
+
+                    }
+                );
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `Unable to load Patient ${patientId}. HTTP ${response.status}`
+                );
+
+            }
+
+
+            const patient =
+                await response.json();
+
+
+            editingPatient =
+                patient;
+
+
+            await fillPatientForm(
+                patient
+            );
+
+
+            document.getElementById(
+                "modalTitle"
+            ).textContent =
+                "Edit Patient";
+
+
+            document.getElementById(
+                "savePatientBtn"
+            ).textContent =
+                "Update Patient";
+
+
+            document.getElementById(
+                "editIdSection"
+            ).style.display =
+                "block";
+
+
+            document.getElementById(
+                "patientModal"
+            ).classList.add(
+                "active"
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+
+            alert(
+                `Failed to load Patient.\n\n${error.message}`
+            );
+
+        }
+
+    }
+
+
+    // ==========================================================
+    // FILL EDIT FORM
+    // ==========================================================
+
+    async function fillPatientForm(
+        patient
+    ) {
+        document
+            .getElementById("patientForm")
+            .reset();
+
+        document.getElementById("editPatientId").value = patient.id || "";
+
+        const name =
+            patient.name?.find(n => n.use === "official") ||
+            patient.name?.[0] ||
+            {};
+
+        const given = Array.isArray(name.given) ? name.given : [];
+
+        document.getElementById("firstName").value = given[0] || "";
+        document.getElementById("middleName").value = given.slice(1).join(" ");
+        document.getElementById("lastName").value = name.family || "";
+        document.getElementById("gender").value = patient.gender || "";
+        document.getElementById("birthDate").value = patient.birthDate || "";
+        document.getElementById("phone").value =
+            patient.telecom?.find(t => t.system === "phone")?.value || "";
+
+        const address = patient.address?.[0] || {};
+
+        document.getElementById("addressLine").value =
+            address.line?.join(", ") || "";
+        document.getElementById("postalCode").value = address.postalCode || "";
+        document.getElementById("country").value = address.country || "PH";
+
+        const region = getAddressCoding(address, EXTENSION_URLS.region);
+        const province = getAddressCoding(address, EXTENSION_URLS.province);
+        const municipality = getAddressCoding(address, EXTENSION_URLS.municipality);
+        const barangay = getAddressCoding(address, EXTENSION_URLS.barangay);
+
+        await initializeRegions();
+
+        if (region?.code) {
+            const regionSelect = document.getElementById("region");
+            regionSelect.value = region.code;
+            await loadProvinces(region.code);
+        }
+
+        if (province?.code) {
+            const provinceSelect = document.getElementById("province");
+            provinceSelect.value = province.code;
+            await loadMunicipalities(province.code);
+        }
+
+        if (municipality?.code) {
+            const municipalitySelect = document.getElementById("municipality");
+            municipalitySelect.value = municipality.code;
+            await loadBarangays(municipality.code);
+        }
+
+        if (barangay?.code) {
+            document.getElementById("barangay").value = barangay.code;
+        }
+    }
+
+    // ==========================================================
+    // SAVE / UPDATE PATIENT
+    // ==========================================================
+
+    document
+        .getElementById("patientForm")
+        .addEventListener(
+            "submit",
+            savePatient
+        );
+
+
+    async function savePatient(
+        event
+    ) {
+        event.preventDefault();
+
+        // Hard guard against double-click / duplicate POST.
+        if (isSavingPatient) {
+            return;
+        }
+
+        const button = document.getElementById("savePatientBtn");
+        const isEditing = Boolean(editingPatient?.id);
+
+        isSavingPatient = true;
+        button.disabled = true;
+        button.textContent = isEditing ? "Updating..." : "Saving...";
+
+        try {
+            const patient = buildPatientResource();
+
+            console.log("FHIR payload:", patient);
+
+            const url = isEditing
+                ? `${FHIR_BASE_URL}/Patient/${encodeURIComponent(editingPatient.id)}`
+                : `${FHIR_BASE_URL}/Patient`;
+
+            const response = await fetch(url, {
+                method: isEditing ? "PUT" : "POST",
+                headers: {
+                    "Content-Type": "application/fhir+json",
+                    "Accept": "application/fhir+json"
+                },
+                body: JSON.stringify(patient)
+            });
+
+            const responseText = await response.text();
+
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}\n${responseText}`);
+            }
+
+            let savedResource = null;
+            try {
+                savedResource = responseText ? JSON.parse(responseText) : null;
+            } catch (_) {
+                // Some FHIR servers may return an empty body for successful writes.
+            }
+
+            const returnedId = savedResource?.id || patient.id || "";
+
+            closePatientModal();
+
+            alert(
+                isEditing
+                    ? `Patient updated successfully.${returnedId ? `\n\nFHIR ID: ${returnedId}` : ""}`
+                    : `Patient created successfully.${returnedId ? `\n\nFHIR ID: ${returnedId}` : ""}`
+            );
+
+            await loadPatients();
+
+        } catch (error) {
+            console.error(error);
+            alert(`Failed to ${isEditing ? "update" : "create"} Patient.\n\n${error.message}`);
+        } finally {
+            isSavingPatient = false;
+            button.disabled = false;
+            button.textContent = isEditing ? "Update Patient" : "Save Patient";
+        }
+    }
+
+    // ==========================================================
+    // BUILD FHIR PATIENT
+    // ==========================================================
+
+    function buildPatientResource() {
+
+        const firstName =
+            document.getElementById(
+                "firstName"
+            ).value.trim();
+
+
+        const middleName =
+            document.getElementById(
+                "middleName"
+            ).value.trim();
+
+
+        const lastName =
+            document.getElementById(
+                "lastName"
+            ).value.trim();
+
+
+        const gender =
+            document.getElementById(
+                "gender"
+            ).value;
+
+
+        const birthDate =
+            document.getElementById(
+                "birthDate"
+            ).value;
+
+
+        const phone =
+            document.getElementById(
+                "phone"
+            ).value.trim();
+
+
+        const addressLine =
+            document.getElementById(
+                "addressLine"
+            ).value.trim();
+
+
+        const postalCode =
+            document.getElementById(
+                "postalCode"
+            ).value.trim();
+
+
+        const country =
+            document.getElementById(
+                "country"
+            ).value.trim()
+            ||
+            "PH";
+
+
+        const region =
+            getSelectedOptionData(
+                document.getElementById(
+                    "region"
+                )
+            );
+
+
+        const province =
+            getSelectedOptionData(
+                document.getElementById(
+                    "province"
+                )
+            );
+
+
+        const municipality =
+            getSelectedOptionData(
+                document.getElementById(
+                    "municipality"
+                )
+            );
+
+
+        const barangay =
+            getSelectedOptionData(
+                document.getElementById(
+                    "barangay"
+                )
+            );
+
+
+        const patient = {
+
+            resourceType:
+                "Patient",
+
+            active:
+                true,
+
+            name: [
+
+                {
+
+                    use:
+                        "official",
+
+                    family:
+                        lastName,
+
+                    given:
+                        [
+                            firstName,
+                            ...(middleName
+                                ? [middleName]
+                                : [])
+                        ]
+
+                }
+
+            ],
+
+            gender:
+                gender,
+
+            telecom:
+                phone
+                    ? [
+                        {
+                            system: "phone",
+                            value: phone,
+                            use: "mobile"
+                        }
+                    ]
+                    : [],
+
+            address: [
+
+                {
+
+                    use:
+                        "home",
+
+                    extension: [
+
+                        createCodingExtension(
+                            EXTENSION_URLS.region,
+                            region
+                        ),
+
+                        createCodingExtension(
+                            EXTENSION_URLS.province,
+                            province
+                        ),
+
+                        createCodingExtension(
+                            EXTENSION_URLS.municipality,
+                            municipality
+                        ),
+
+                        createCodingExtension(
+                            EXTENSION_URLS.barangay,
+                            barangay
+                        )
+
+                    ].filter(Boolean),
+
+                    line:
+                        addressLine
+                            ? [addressLine]
+                            : [],
+
+                    postalCode:
+                        postalCode,
+
+                    country:
+                        country
+
+                }
+
+            ]
+
+        };
+
+
+        if (birthDate) {
+
+            patient.birthDate =
+                birthDate;
+
+        }
+
+
+        // ======================================================
+        // CREATE
+        // ======================================================
+
+        if (
+            !editingPatient
+        ) {
+
+            patient.identifier = [
+
+                {
+
+                    system:
+                        "https://r12-connectathon.example/identifier/patient",
+
+                    value:
+                        `GROUP2-PATIENT-${Date.now()}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`
+
+                }
+
+            ];
+
+        }
+
+
+        // ======================================================
+        // UPDATE
+        //
+        // Preserve ID, identifier and meta from existing
+        // FHIR resource.
+        // ======================================================
+
+        else {
+
+            patient.id =
+                editingPatient.id;
+
+
+            if (
+                editingPatient.meta
+            ) {
+
+                patient.meta =
+                    editingPatient.meta;
+
+            }
+
+
+            if (
+                editingPatient.identifier
+            ) {
+
+                patient.identifier =
+                    editingPatient.identifier;
+
+            }
+
+
+            /*
+             * Preserve profile from meta.
+             * meta is already copied above.
+             */
+
+        }
+
+
+        removeUndefined(
+            patient
+        );
+
+
+        return patient;
+
+    }
+
+
+    // ==========================================================
+    // CREATE PSGC EXTENSION
+    // ==========================================================
+
+    function createCodingExtension(
+        url,
+        item
+    ) {
+
+        if (
+            !item ||
+            !item.code
+        ) {
+
+            return null;
+
+        }
+
+
+        return {
+
+            url:
+                url,
+
+            valueCoding: {
+
+                system:
+                    PSGC_SYSTEM,
+
+                code:
+                    item.code,
+
+                display:
+                    item.display
+
+            }
+
+        };
+
+    }
+
+
+    // ==========================================================
+    // DELETE
+    // ==========================================================
+
+    async function deletePatientById(
+        patientId
+    ) {
+
+        const patient =
+            allPatients.find(
+                p =>
+                    String(p.id) ===
+                    String(patientId)
+            );
+
+
+        const name =
+            patient
+                ? getPatientName(patient)
+                : patientId;
+
+
+        const confirmed =
+            confirm(
+                `Are you sure you want to DELETE this Patient?\n\n${name}\nFHIR ID: ${patientId}\n\nThis will send DELETE to the FHIR server.`
+            );
+
+
+        if (!confirmed) {
+
+            return;
+
+        }
+
+
+        try {
+
+            const response =
+                await fetch(
+                    `${FHIR_BASE_URL}/Patient/${encodeURIComponent(patientId)}`,
+                    {
+
+                        method: "DELETE",
+
+                        headers: {
+
+                            "Accept":
+                                "application/fhir+json"
+
+                        }
+
+                    }
+                );
+
+
+            const responseText =
+                await response.text();
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    `HTTP ${response.status}\n${responseText}`
+                );
+
+            }
+
+
+            alert(
+                "Patient deleted successfully."
+            );
+
+
+            await loadPatients();
+
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+
+            alert(
+                `Failed to delete Patient.\n\n${error.message}`
+            );
+
+        }
+
+    }
+
+
+    // ==========================================================
+    // PSGC DROPDOWNS
+    // ==========================================================
+
+    async function fetchPSGC(path) {
+        const response = await fetch(`${PSGC_API_BASE}${path}`, {
+            method: "GET",
+            headers: {
+                "Accept": "application/json"
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`PSGC API returned HTTP ${response.status}`);
+        }
+
+        return response.json();
+    }
+
+
+    function getPSGC10DigitCode(item) {
+        return String(item.psgc10DigitCode || item.code || "");
+    }
+
+
+    function getPSGC9DigitCode(item) {
+        return String(item.code || "");
+    }
+
+
+    function getRegionDisplay(item) {
+        const regionName = item.regionName || "";
+        const areaName = item.name || "";
+
+        if (regionName && areaName && regionName !== areaName) {
+            return `${regionName} (${areaName})`;
+        }
+
+        return regionName || areaName || "Unknown Region";
+    }
+
+
+    async function initializeRegions() {
+        const region = document.getElementById("region");
+        const province = document.getElementById("province");
+        const municipality = document.getElementById("municipality");
+        const barangay = document.getElementById("barangay");
+
+        resetSelect(region, "Select Region");
+        resetSelect(province, "Select Province");
+        resetSelect(municipality, "Select Municipality / City");
+        resetSelect(barangay, "Select Barangay");
+
+        province.disabled = true;
+        municipality.disabled = true;
+        barangay.disabled = true;
+
+        try {
+            if (!PSGC_CACHE.regions) {
+                PSGC_CACHE.regions = await fetchPSGC("/regions/");
+            }
+
+            (PSGC_CACHE.regions || []).forEach(item => {
+                addOption(
+                    region,
+                    getPSGC10DigitCode(item),
+                    getRegionDisplay(item),
+                    getPSGC9DigitCode(item)
+                );
+            });
+
+        } catch (error) {
+            console.error("Failed to load PSGC regions:", error);
+            addOption(region, "", "Unable to load regions");
+            region.disabled = true;
+            alert(`Failed to load PSGC regions.\n\n${error.message}`);
+        }
+    }
+
+
+    async function loadProvinces(regionCode10) {
+        const region = document.getElementById("region");
+        const province = document.getElementById("province");
+        const municipality = document.getElementById("municipality");
+        const barangay = document.getElementById("barangay");
+
+        resetSelect(province, "Select Province");
+        resetSelect(municipality, "Select Municipality / City");
+        resetSelect(barangay, "Select Barangay");
+
+        municipality.disabled = true;
+        barangay.disabled = true;
+
+        if (!regionCode10) {
+            province.disabled = true;
+            return;
+        }
+
+        try {
+            const regionOption = region.options[region.selectedIndex];
+            const regionCode9 = regionOption?.dataset.parentCode;
+
+            if (!regionCode9) {
+                province.disabled = true;
+                return;
+            }
+
+            let list = PSGC_CACHE.provinces.get(regionCode9);
+
+            if (!list) {
+                list = await fetchPSGC(`/regions/${encodeURIComponent(regionCode9)}/provinces/`);
+                PSGC_CACHE.provinces.set(regionCode9, list || []);
+            }
+
+            (list || []).forEach(item => {
+                addOption(
+                    province,
+                    getPSGC10DigitCode(item),
+                    item.name || "Unknown Province",
+                    getPSGC9DigitCode(item)
+                );
+            });
+
+            province.disabled = false;
+
+        } catch (error) {
+            console.error("Failed to load PSGC provinces:", error);
+            province.disabled = true;
+            alert(`Failed to load provinces.\n\n${error.message}`);
+        }
+    }
+
+
+    async function loadMunicipalities(provinceCode10) {
+        const province = document.getElementById("province");
+        const municipality = document.getElementById("municipality");
+        const barangay = document.getElementById("barangay");
+
+        resetSelect(municipality, "Select Municipality / City");
+        resetSelect(barangay, "Select Barangay");
+        barangay.disabled = true;
+
+        if (!provinceCode10) {
+            municipality.disabled = true;
+            return;
+        }
+
+        try {
+            const provinceOption = province.options[province.selectedIndex];
+            const provinceCode9 = provinceOption?.dataset.parentCode;
+
+            if (!provinceCode9) {
+                municipality.disabled = true;
+                return;
+            }
+
+            let list = PSGC_CACHE.municipalities.get(provinceCode9);
+
+            if (!list) {
+                list = await fetchPSGC(`/provinces/${encodeURIComponent(provinceCode9)}/cities-municipalities/`);
+                PSGC_CACHE.municipalities.set(provinceCode9, list || []);
+            }
+
+            (list || []).forEach(item => {
+                addOption(
+                    municipality,
+                    getPSGC10DigitCode(item),
+                    item.name || "Unknown Municipality / City",
+                    getPSGC9DigitCode(item)
+                );
+            });
+
+            municipality.disabled = false;
+
+        } catch (error) {
+            console.error("Failed to load PSGC municipalities/cities:", error);
+            municipality.disabled = true;
+            alert(`Failed to load municipalities/cities.\n\n${error.message}`);
+        }
+    }
+
+
+    async function loadBarangays(municipalityCode10) {
+        const municipality = document.getElementById("municipality");
+        const barangay = document.getElementById("barangay");
+
+        resetSelect(barangay, "Select Barangay");
+
+        if (!municipalityCode10) {
+            barangay.disabled = true;
+            return;
+        }
+
+        try {
+            const municipalityOption = municipality.options[municipality.selectedIndex];
+            const municipalityCode9 = municipalityOption?.dataset.parentCode;
+
+            if (!municipalityCode9) {
+                barangay.disabled = true;
+                return;
+            }
+
+            let list = PSGC_CACHE.barangays.get(municipalityCode9);
+
+            if (!list) {
+                list = await fetchPSGC(`/cities-municipalities/${encodeURIComponent(municipalityCode9)}/barangays/`);
+                PSGC_CACHE.barangays.set(municipalityCode9, list || []);
+            }
+
+            (list || []).forEach(item => {
+                addOption(
+                    barangay,
+                    getPSGC10DigitCode(item),
+                    item.name || "Unknown Barangay",
+                    getPSGC9DigitCode(item)
+                );
+            });
+
+            barangay.disabled = false;
+
+        } catch (error) {
+            console.error("Failed to load PSGC barangays:", error);
+            barangay.disabled = true;
+            alert(`Failed to load barangays.\n\n${error.message}`);
+        }
+    }
+
+
+    document
+        .getElementById("region")
+        .addEventListener("change", async function () {
+            await loadProvinces(this.value);
+        });
+
+
+    document
+        .getElementById("province")
+        .addEventListener("change", async function () {
+            await loadMunicipalities(this.value);
+        });
+
+
+    document
+        .getElementById("municipality")
+        .addEventListener("change", async function () {
+            await loadBarangays(this.value);
+        });
+
+
+    function resetSelect(select, placeholder) {
+        select.innerHTML = `<option value="">${placeholder}</option>`;
+    }
+
+
+    function addOption(select, value, text, parentCode = "") {
+        const option = document.createElement("option");
+
+        option.value = value;
+        option.textContent = text;
+        option.dataset.display = text;
+        option.dataset.parentCode = parentCode;
+
+        select.appendChild(option);
+    }
+
+
+    function getSelectedOptionData(select) {
+        if (!select || !select.value) {
+            return null;
+        }
+
+        const option = select.options[select.selectedIndex];
+
+        return {
+            code: option.value,
+            display: option.dataset.display || option.textContent
+        };
+    }
+
+    // ==========================================================
+    // ADDRESS SUMMARY
+    // ==========================================================
+
+    function getAddressSummary(
+        patient
+    ) {
+
+        const address =
+            patient.address?.[0];
+
+
+        if (!address) {
+
+            return "N/A";
+
+        }
+
+
+        const municipality =
+            getAddressCoding(
+                address,
+                EXTENSION_URLS.municipality
+            );
+
+
+        const province =
+            getAddressCoding(
+                address,
+                EXTENSION_URLS.province
+            );
+
+
+        const region =
+            getAddressCoding(
+                address,
+                EXTENSION_URLS.region
+            );
+
+
+        const parts = [];
+
+
+        if (
+            address.line?.length
+        ) {
+
+            parts.push(
+                address.line.join(", ")
+            );
+
+        }
+
+
+        if (
+            municipality?.display
+        ) {
+
+            parts.push(
+                municipality.display
+            );
+
+        }
+
+
+        if (
+            province?.display
+        ) {
+
+            parts.push(
+                province.display
+            );
+
+        }
+
+
+        if (
+            region?.display
+        ) {
+
+            parts.push(
+                region.display
+            );
+
+        }
+
+
+        if (
+            parts.length === 0 &&
+            address.country
+        ) {
+
+            parts.push(
+                address.country
+            );
+
+        }
+
+
+        return parts.join(", ") ||
+            "N/A";
+
+    }
+
+
+    function getAddressCoding(
+        address,
+        url
+    ) {
+
+        return address
+            ?.extension
+            ?.find(
+                extension =>
+                    extension.url === url
+            )
+            ?.valueCoding ||
+            null;
+
+    }
+
+
+    // ==========================================================
+    // PATIENT NAME
+    // ==========================================================
+
+    function getPatientName(
+        patient
+    ) {
+
+        const name =
+            patient.name?.find(
+                n =>
+                    n.use === "official"
+            )
+            ||
+            patient.name?.[0]
+            ||
+            {};
+
+
+        const given =
+            Array.isArray(name.given)
+                ? name.given.join(" ")
+                : "";
+
+
+        return [
+            given,
+            name.family || ""
+        ]
+            .filter(Boolean)
+            .join(" ")
+            ||
+            "Unnamed Patient";
+
+    }
+
+
+    // ==========================================================
+    // AGE
+    // ==========================================================
+
+    function calculateAge(
+        birthDate
+    ) {
+
+        if (!birthDate) {
+
+            return null;
+
+        }
+
+
+        const birth =
+            new Date(
+                `${birthDate}T00:00:00`
+            );
+
+
+        if (
+            Number.isNaN(
+                birth.getTime()
+            )
+        ) {
+
+            return null;
+
+        }
+
+
+        const today =
+            new Date();
+
+
+        let age =
+            today.getFullYear() -
+            birth.getFullYear();
+
+
+        const month =
+            today.getMonth() -
+            birth.getMonth();
+
+
+        if (
+            month < 0 ||
+            (
+                month === 0 &&
+                today.getDate() <
+                birth.getDate()
+            )
+        ) {
+
+            age--;
+
+        }
+
+
+        return age;
+
+    }
+
+
+    // ==========================================================
+    // MODAL CLOSE
+    // ==========================================================
+
+    function closePatientModal() {
+
+        document
+            .getElementById(
+                "patientModal"
+            )
+            .classList.remove(
+                "active"
+            );
+
+
+        editingPatient =
+            null;
+
+    }
+
+
+    document
+        .getElementById("closeModal")
+        .addEventListener(
+            "click",
+            closePatientModal
+        );
+
+
+    document
+        .getElementById("cancelModal")
+        .addEventListener(
+            "click",
+            closePatientModal
+        );
+
+
+    document
+        .getElementById("patientModal")
+        .addEventListener(
+            "click",
+            function (event) {
+
+                if (
+                    event.target ===
+                    this
+                ) {
+
+                    closePatientModal();
+
+                }
+
+            }
+        );
+
+
+    // ==========================================================
+    // UTILITY
+    // ==========================================================
+
+    function capitalize(
+        value
+    ) {
+
+        if (!value) {
+
+            return "";
+
+        }
+
+
+        return (
+            value.charAt(0).toUpperCase() +
+            value.slice(1)
+        );
+
+    }
+
+
+    function removeUndefined(
+        object
+    ) {
+
+        Object.keys(
+            object
+        ).forEach(
+            key => {
+
+                if (
+                    object[key] ===
+                    undefined
+                ) {
+
+                    delete object[key];
+
+                }
+
+                else if (
+                    Array.isArray(
+                        object[key]
+                    )
+                ) {
+
+                    object[key] =
+                        object[key].filter(
+                            item =>
+                                item !==
+                                undefined
+                        );
+
+
+                    object[key].forEach(
+                        item => {
+
+                            if (
+                                item &&
+                                typeof item ===
+                                "object"
+                            ) {
+
+                                removeUndefined(
+                                    item
+                                );
+
+                            }
+
+                        }
+                    );
+
+                }
+
+                else if (
+                    object[key] &&
+                    typeof object[key] ===
+                    "object"
+                ) {
+
+                    removeUndefined(
+                        object[key]
+                    );
+
+                }
+
+            }
+        );
+
+    }
+
+
+    function escapeHtml(
+        value
+    ) {
+
+        return String(
+            value ?? ""
+        )
+
+            .replace(
+                /&/g,
+                "&amp;"
+            )
+
+            .replace(
+                /</g,
+                "&lt;"
+            )
+
+            .replace(
+                />/g,
+                "&gt;"
+            )
+
+            .replace(
+                /"/g,
+                "&quot;"
+            )
+
+            .replace(
+                /'/g,
+                "&#039;"
+            );
+
+    }
+
+
+    function escapeJs(
+        value
+    ) {
+
+        return String(
+            value ?? ""
+        )
+            .replace(
+                /\\/g,
+                "\\\\"
+            )
+            .replace(
+                /'/g,
+                "\\'"
+            );
+
+    }
+
+
+    console.log(
+        "e-Referral Group 2 FHIR loaded."
+    );
+
+    console.log(
+        "FHIR Base:",
+        FHIR_BASE_URL
+    );
+
+</script> 
+
 </body>
 </html>
