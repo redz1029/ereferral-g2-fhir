@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>e-Referral Group 2 FHIR</title>
 
+    <!-- Chart.js CDN (for the Network Overview dashboard) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+
     <style>
         * {
             box-sizing: border-box;
@@ -286,6 +289,246 @@
                 display: none;
             }
         }
+
+        /* DASHBOARD */
+
+        .dashboard-status {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .stat-tile {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            background: #eff6ff;
+            color: #1d4ed8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .stat-unavailable {
+            font-size: 16px;
+            font-weight: 600;
+            color: #9ca3af;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .chart-card {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .chart-card.wide {
+            grid-column: 1 / -1;
+        }
+
+        .chart-card h3 {
+            margin: 0;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .chart-wrap {
+            position: relative;
+            height: 180px;
+        }
+
+        .chart-wrap-wide {
+            height: 220px;
+        }
+
+        .chart-note {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .bar-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .bar-list-empty {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .bar-row {
+            display: grid;
+            grid-template-columns: 100px 1fr 30px;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+        }
+
+        .bar-row-label {
+            color: #374151;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .bar-row-track {
+            background: #eff6ff;
+            border-radius: 4px;
+            height: 10px;
+            overflow: hidden;
+        }
+
+        .bar-row-fill {
+            background: #2563eb;
+            height: 100%;
+            border-radius: 4px;
+        }
+
+        .bar-row-value {
+            text-align: right;
+            color: #6b7280;
+            font-weight: 600;
+        }
+
+        .gap-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 18px;
+            margin-bottom: 25px;
+        }
+
+        .gap-card {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .gap-icon {
+            font-size: 22px;
+        }
+
+        .gap-value {
+            font-size: 22px;
+            font-weight: 700;
+            color: #92400e;
+        }
+
+        .gap-value.stat-unavailable {
+            font-size: 16px;
+            font-weight: 600;
+            color: #9ca3af;
+        }
+
+        .gap-label {
+            font-size: 12px;
+            color: #6b7280;
+        }
+
+        .activity-card h3 {
+            margin: 0 0 12px;
+            font-size: 14px;
+            color: #374151;
+        }
+
+        .activity-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 320px;
+            overflow-y: auto;
+        }
+
+        .activity-empty {
+            font-size: 13px;
+            color: #9ca3af;
+        }
+
+        .activity-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .activity-row:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #eff6ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            flex-shrink: 0;
+        }
+
+        .activity-body {
+            flex-grow: 1;
+            min-width: 0;
+        }
+
+        .activity-title {
+            font-size: 13px;
+            color: #1f2937;
+        }
+
+        .activity-title code {
+            color: #6b7280;
+        }
+
+        .activity-time {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
+        .activity-badge {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 3px 8px;
+            border-radius: 20px;
+            flex-shrink: 0;
+        }
     </style>
 </head>
 
@@ -329,6 +572,109 @@
         </div>
 
         <section>
+            <h2>Network Overview</h2>
+            <div class="dashboard-status" id="dashboardStatus">Connecting to FHIR server&hellip;</div>
+
+            <div class="stat-grid">
+                <div class="stat-tile">
+                    <div class="stat-icon">&#128100;</div>
+                    <div class="stat-value" id="stat-patient">&hellip;</div>
+                    <div class="stat-label">Patients</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-icon">&#127978;</div>
+                    <div class="stat-value" id="stat-organization">&hellip;</div>
+                    <div class="stat-label">Organizations</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-icon">&#129658;</div>
+                    <div class="stat-value" id="stat-practitioner">&hellip;</div>
+                    <div class="stat-label">Practitioners</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-icon">&#128203;</div>
+                    <div class="stat-value" id="stat-practitionerrole">&hellip;</div>
+                    <div class="stat-label">Practitioner Roles</div>
+                </div>
+                <div class="stat-tile">
+                    <div class="stat-icon">&#128228;</div>
+                    <div class="stat-value" id="stat-servicerequest">&hellip;</div>
+                    <div class="stat-label">e-Referrals</div>
+                </div>
+            </div>
+
+            <div class="chart-grid">
+                <div class="card chart-card">
+                    <h3>Patient Gender Split</h3>
+                    <div class="chart-wrap"><canvas id="chartPatientGender"></canvas></div>
+                    <div class="chart-note" id="note-patientGender"></div>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>Patient Age Bands</h3>
+                    <div class="bar-list" id="barPatientAge"></div>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>Organization Status</h3>
+                    <div class="chart-wrap"><canvas id="chartOrgStatus"></canvas></div>
+                    <div class="chart-note" id="note-orgStatus"></div>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>Top Organization Types</h3>
+                    <div class="bar-list" id="barOrgTypes"></div>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>Practitioner Role Status</h3>
+                    <div class="chart-wrap"><canvas id="chartRoleStatus"></canvas></div>
+                    <div class="chart-note" id="note-roleStatus"></div>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>Top Specialties</h3>
+                    <div class="bar-list" id="barSpecialties"></div>
+                </div>
+
+                <div class="card chart-card">
+                    <h3>Staffing per Organization</h3>
+                    <div class="bar-list" id="barStaffing"></div>
+                </div>
+
+                <div class="card chart-card wide">
+                    <h3>e-Referral Status Funnel</h3>
+                    <div class="chart-wrap chart-wrap-wide"><canvas id="chartReferralFunnel"></canvas></div>
+                    <div class="chart-note" id="note-referralFunnel"></div>
+                </div>
+            </div>
+
+            <div class="gap-grid">
+                <div class="card gap-card">
+                    <div class="gap-icon">&#9888;&#65039;</div>
+                    <div>
+                        <div class="gap-value" id="gap-practitioners">&hellip;</div>
+                        <div class="gap-label">Practitioners with no assigned role</div>
+                    </div>
+                </div>
+                <div class="card gap-card">
+                    <div class="gap-icon">&#9888;&#65039;</div>
+                    <div>
+                        <div class="gap-value" id="gap-organizations">&hellip;</div>
+                        <div class="gap-label">Organizations with no staffed role</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card activity-card">
+                <h3>Recent Activity</h3>
+                <div class="activity-feed" id="activityFeed">
+                    <div class="activity-empty">Loading recent activity&hellip;</div>
+                </div>
+            </div>
+        </section>
+
+        <section>
             <h2>Get started</h2>
             <div class="module-grid">
                 <a href="src/patient/PatientView.html" class="module-card">
@@ -368,5 +714,8 @@
             </div>
         </section>
     </main>
+
+    <script src="src/shared/fhirConfig.js"></script>
+    <script src="src/home/dashboard.js"></script>
 </body>
 </html>
