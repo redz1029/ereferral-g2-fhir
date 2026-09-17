@@ -1646,7 +1646,7 @@ async function loadPatients() {
                             : [],
 
                     postalCode:
-                        postalCode,
+                        postalCode || undefined,
 
                     country:
                         country
@@ -1851,16 +1851,11 @@ async function loadPatients() {
 
         try {
             if (!PSGC_CACHE.regions) {
-                PSGC_CACHE.regions = await fetchPSGC("/regions/");
+                PSGC_CACHE.regions = [await fetchPsgcConcept(PSGC_REGION_CODE)];
             }
 
             (PSGC_CACHE.regions || []).forEach(item => {
-                addOption(
-                    region,
-                    getPSGC10DigitCode(item),
-                    getRegionDisplay(item),
-                    getPSGC9DigitCode(item)
-                );
+                addOption(region, item.code, item.display);
             });
 
         } catch (error) {
@@ -1873,7 +1868,6 @@ async function loadPatients() {
 
 
     async function loadProvinces(regionCode10) {
-        const region = document.getElementById("region");
         const province = document.getElementById("province");
         const municipality = document.getElementById("municipality");
         const barangay = document.getElementById("barangay");
@@ -1891,28 +1885,15 @@ async function loadPatients() {
         }
 
         try {
-            const regionOption = region.options[region.selectedIndex];
-            const regionCode9 = regionOption?.dataset.parentCode;
-
-            if (!regionCode9) {
-                province.disabled = true;
-                return;
-            }
-
-            let list = PSGC_CACHE.provinces.get(regionCode9);
+            let list = PSGC_CACHE.provinces.get(regionCode10);
 
             if (!list) {
-                list = await fetchPSGC(`/regions/${encodeURIComponent(regionCode9)}/provinces/`);
-                PSGC_CACHE.provinces.set(regionCode9, list || []);
+                list = await fetchPsgcChildren(regionCode10);
+                PSGC_CACHE.provinces.set(regionCode10, list);
             }
 
-            (list || []).forEach(item => {
-                addOption(
-                    province,
-                    getPSGC10DigitCode(item),
-                    item.name || "Unknown Province",
-                    getPSGC9DigitCode(item)
-                );
+            list.forEach(item => {
+                addOption(province, item.code, item.display);
             });
 
             province.disabled = false;
@@ -1926,7 +1907,6 @@ async function loadPatients() {
 
 
     async function loadMunicipalities(provinceCode10) {
-        const province = document.getElementById("province");
         const municipality = document.getElementById("municipality");
         const barangay = document.getElementById("barangay");
 
@@ -1940,28 +1920,15 @@ async function loadPatients() {
         }
 
         try {
-            const provinceOption = province.options[province.selectedIndex];
-            const provinceCode9 = provinceOption?.dataset.parentCode;
-
-            if (!provinceCode9) {
-                municipality.disabled = true;
-                return;
-            }
-
-            let list = PSGC_CACHE.municipalities.get(provinceCode9);
+            let list = PSGC_CACHE.municipalities.get(provinceCode10);
 
             if (!list) {
-                list = await fetchPSGC(`/provinces/${encodeURIComponent(provinceCode9)}/cities-municipalities/`);
-                PSGC_CACHE.municipalities.set(provinceCode9, list || []);
+                list = await fetchPsgcChildren(provinceCode10);
+                PSGC_CACHE.municipalities.set(provinceCode10, list);
             }
 
-            (list || []).forEach(item => {
-                addOption(
-                    municipality,
-                    getPSGC10DigitCode(item),
-                    item.name || "Unknown Municipality / City",
-                    getPSGC9DigitCode(item)
-                );
+            list.forEach(item => {
+                addOption(municipality, item.code, item.display);
             });
 
             municipality.disabled = false;
@@ -1975,10 +1942,11 @@ async function loadPatients() {
 
 
     async function loadBarangays(municipalityCode10) {
-        const municipality = document.getElementById("municipality");
         const barangay = document.getElementById("barangay");
 
         resetSelect(barangay, "Select Barangay");
+        barangay.required = true;
+        setBarangayRequiredMarkVisible(true);
 
         if (!municipalityCode10) {
             barangay.disabled = true;
@@ -1986,28 +1954,26 @@ async function loadPatients() {
         }
 
         try {
-            const municipalityOption = municipality.options[municipality.selectedIndex];
-            const municipalityCode9 = municipalityOption?.dataset.parentCode;
+            let list = PSGC_CACHE.barangays.get(municipalityCode10);
 
-            if (!municipalityCode9) {
+            if (!list) {
+                list = await fetchPsgcChildren(municipalityCode10);
+                PSGC_CACHE.barangays.set(municipalityCode10, list);
+            }
+
+            if (list.length === 0) {
+                // Some highly-urbanized cities have no barangay
+                // entries under them in PSGC - don't force a pick
+                // that has no valid option.
+                resetSelect(barangay, "No barangay for this city/municipality");
+                barangay.required = false;
                 barangay.disabled = true;
+                setBarangayRequiredMarkVisible(false);
                 return;
             }
 
-            let list = PSGC_CACHE.barangays.get(municipalityCode9);
-
-            if (!list) {
-                list = await fetchPSGC(`/cities-municipalities/${encodeURIComponent(municipalityCode9)}/barangays/`);
-                PSGC_CACHE.barangays.set(municipalityCode9, list || []);
-            }
-
-            (list || []).forEach(item => {
-                addOption(
-                    barangay,
-                    getPSGC10DigitCode(item),
-                    item.name || "Unknown Barangay",
-                    getPSGC9DigitCode(item)
-                );
+            list.forEach(item => {
+                addOption(barangay, item.code, item.display);
             });
 
             barangay.disabled = false;
@@ -2016,6 +1982,15 @@ async function loadPatients() {
             console.error("Failed to load PSGC barangays:", error);
             barangay.disabled = true;
             alert(`Failed to load barangays.\n\n${error.message}`);
+        }
+    }
+
+
+    function setBarangayRequiredMarkVisible(visible) {
+        const mark = document.getElementById("barangayRequiredMark");
+
+        if (mark) {
+            mark.hidden = !visible;
         }
     }
 
@@ -2046,13 +2021,12 @@ async function loadPatients() {
     }
 
 
-    function addOption(select, value, text, parentCode = "") {
+    function addOption(select, value, text) {
         const option = document.createElement("option");
 
         option.value = value;
         option.textContent = text;
         option.dataset.display = text;
-        option.dataset.parentCode = parentCode;
 
         select.appendChild(option);
     }
