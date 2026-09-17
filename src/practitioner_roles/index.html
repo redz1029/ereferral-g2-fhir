@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PractitionerRole Management - e-Referral Group 2 FHIR</title>
+
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- Select2 CSS & JS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        .select2-container--default .select2-selection--single {
+            height: 40px !important;
+            border: 1px solid var(--border-color, #e2e8f0) !important;
+            border-radius: 0.375rem !important;
+            padding: 0.3rem 0.5rem !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px !important;
+            color: var(--text-color, #1e293b) !important;
+        }
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 38px !important;
+        }
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --secondary-color: #059669;
+            --secondary-hover: #047857;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --nav-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+            --muted-text: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        header {
+            background-color: var(--nav-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .header-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        nav {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            padding: 0.5rem 1.25rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .nav-btn-secondary {
+            background-color: var(--muted-text);
+        }
+
+        .nav-btn-secondary:hover {
+            background-color: #475569;
+        }
+
+        main {
+            max-width: 1300px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .section-header {
+            margin-bottom: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .layout-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+        }
+
+        @media (max-width: 900px) {
+            .layout-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.75rem;
+            margin-bottom: 1.25rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .card-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 0.875rem;
+            margin-bottom: 0.375rem;
+            color: var(--text-color);
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 0.6rem 0.75rem;
+            font-size: 0.95rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            background-color: #fff;
+            transition: border-color 0.2s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        .btn-small {
+            padding: 0.4rem 0.8rem;
+            font-size: 0.85rem;
+            border-radius: 0.375rem;
+            border: 1px solid var(--border-color);
+            background: #f1f5f9;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s;
+        }
+
+        .btn-small:hover {
+            background: #e2e8f0;
+        }
+
+        .btn-edit {
+            background-color: #fef08a;
+            border-color: #fde047;
+            color: #854d0e;
+            font-weight: 600;
+        }
+
+        .btn-edit:hover {
+            background-color: #fef08a;
+            border-color: #eab308;
+            color: #713f12;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .checkbox-group input {
+            width: 1.1rem;
+            height: 1.1rem;
+            cursor: pointer;
+        }
+
+        .btn-submit {
+            background-color: var(--primary-color);
+            color: #fff;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 600;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            width: 100%;
+            transition: background-color 0.2s;
+        }
+
+        .btn-submit:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn-action-group {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 1rem;
+        }
+
+        .btn-secondary {
+            background-color: var(--secondary-color);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border: none;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .btn-secondary:hover {
+            background-color: var(--secondary-hover);
+        }
+
+        pre.json-viewer {
+            background-color: #0f172a;
+            color: #38bdf8;
+            padding: 1rem;
+            border-radius: 0.375rem;
+            overflow-x: auto;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.875rem;
+            max-height: 520px;
+        }
+
+        .status-badge {
+            font-size: 0.75rem;
+            color: var(--muted-text);
+            margin-top: 0.25rem;
+            display: block;
+        }
+
+        .info-message, .success-message, .error-message {
+            padding: 0.75rem 1rem;
+            border-radius: 0.375rem;
+            margin-top: 1rem;
+            font-size: 0.9rem;
+        }
+
+        .info-message {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            color: #1e40af;
+        }
+
+        .success-message {
+            background: #ecfdf5;
+            border: 1px solid #a7f3d0;
+            color: #065f46;
+        }
+
+        .error-message {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #991b1b;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        .data-table th, .data-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .data-table th {
+            background-color: #f1f5f9;
+            font-weight: 600;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1>e-Referral Group 2 FHIR</h1>
+            <nav aria-label="Main Navigation">
+                <a href="../../index.html" class="nav-btn nav-btn-secondary">← Back to Home</a>
+                <a href="../../index.html" class="nav-btn">Patient</a>
+                <a href="../Organization/OrganizationView.html" class="nav-btn">Organization</a>
+                <a href="../practitioner/PractitionerView.html" class="nav-btn">Practitioner</a>
+                <a href="index.html" class="nav-btn">Practitioner Roles</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Global Server Settings -->
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <div class="card-header" style="margin-bottom: 0.75rem; padding-bottom: 0.5rem;">
+                <h2 class="card-title">🌐 FHIR Server Connection Settings</h2>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="fhirServerUrl">FHIR Server Base URL</label>
+                <div style="margin-bottom:0.5rem;">
+                    <select id="serverPresetSelect" class="form-control" style="font-size:0.85rem; background-color:#f8fafc;">
+                        <option value="https://cdr.pheref.fhirlab.net/fhir">DOH eReferral FHIR CDR (https://cdr.pheref.fhirlab.net/fhir)</option>
+                        <option value="https://hapi.fhir.org/baseR4">HAPI FHIR Public Server (https://hapi.fhir.org/baseR4)</option>
+                        <option value="https://server.fire.ly">Firely FHIR Server (https://server.fire.ly)</option>
+                    </select>
+                </div>
+                <input type="url" id="fhirServerUrl" class="form-control" value="https://cdr.pheref.fhirlab.net/fhir" placeholder="https://cdr.pheref.fhirlab.net/fhir">
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             TOP SECTION: CREATION FORM & LIVE JSON PREVIEW (SPLIT VIEW)
+             =================================================================== -->
+        <div class="section-header">
+            <h2 class="section-title">📋 PractitionerRole Generator & Form</h2>
+            <button type="button" class="btn-small" onclick="resetPractitionerRoleForm()">🔄 Reset Form</button>
+        </div>
+
+        <div class="layout-grid">
+            <!-- Left Column: PractitionerRole Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">PractitionerRole Details</h3>
+                </div>
+
+                <form id="practitionerRoleForm">
+                    <!-- Practitioner Selection -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label for="refPractitionerSelect" style="margin-bottom: 0; font-weight: 600;">👨‍⚕️ Practitioner</label>
+                            <button type="button" class="btn-small" onclick="fetchPractitioners()" title="Refresh Practitioners">↻ Refresh</button>
+                        </div>
+                        <select id="refPractitionerSelect" class="form-control">
+                            <option value="">-- Select a Practitioner --</option>
+                        </select>
+                    </div>
+
+                    <!-- Organization Selection -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label for="referringOrgSelect" style="margin-bottom: 0; font-weight: 600;">🏥 Organization</label>
+                            <button type="button" class="btn-small" onclick="fetchOrganizations()" title="Refresh Organizations">↻ Refresh</button>
+                        </div>
+                        <select id="referringOrgSelect" class="form-control">
+                            <option value="">-- Select an Organization --</option>
+                        </select>
+                    </div>
+
+                    <!-- Practitioner Role (SNOMED CT Dropdown) -->
+                    <div class="form-group">
+                        <label for="roleSelect" style="margin-bottom: 0.35rem; font-weight: 600;">🩺 Practitioner Role (SNOMED CT)</label>
+                        <select id="roleSelect" class="form-control" onchange="handleRoleSelectChange()">
+                            <optgroup label="General & Primary Care">
+                                <option value="158965000" data-display="Medical practitioner" selected>158965000 - Medical practitioner</option>
+                                <option value="309343006" data-display="Physician">309343006 - Physician</option>
+                                <option value="62247001" data-display="General practitioner">62247001 - General practitioner</option>
+                                <option value="309294001" data-display="Specialist physician">309294001 - Specialist physician</option>
+                                <option value="309349005" data-display="Public health physician">309349005 - Public health physician</option>
+                            </optgroup>
+
+                            <optgroup label="Surgical & Critical Care">
+                                <option value="159033005" data-display="Surgeon">159033005 - Surgeon</option>
+                                <option value="88475002" data-display="Anesthesiologist">88475002 - Anesthesiologist</option>
+                                <option value="309344000" data-display="Emergency physician">309344000 - Emergency physician</option>
+                            </optgroup>
+
+                            <optgroup label="Medical Specialties">
+                                <option value="309355002" data-display="Cardiologist">309355002 - Cardiologist</option>
+                                <option value="309353009" data-display="Pediatrician">309353009 - Pediatrician</option>
+                                <option value="309367003" data-display="Obstetrician and gynecologist">309367003 - Obstetrician and Gynecologist</option>
+                                <option value="309346003" data-display="Neurologist">309346003 - Neurologist</option>
+                                <option value="309357005" data-display="Dermatologist">309357005 - Dermatologist</option>
+                                <option value="309364005" data-display="Oncologist">309364005 - Oncologist</option>
+                                <option value="309358000" data-display="Psychiatrist">309358000 - Psychiatrist</option>
+                                <option value="309356001" data-display="Nephrologist">309356001 - Nephrologist</option>
+                                <option value="309351006" data-display="Gastroenterologist">309351006 - Gastroenterologist</option>
+                                <option value="309362009" data-display="Pulmonologist">309362009 - Pulmonologist / Respiratory physician</option>
+                                <option value="309363004" data-display="Radiologist">309363004 - Radiologist</option>
+                                <option value="309348002" data-display="Pathologist">309348002 - Pathologist</option>
+                            </optgroup>
+
+                            <optgroup label="Nursing & Midwifery">
+                                <option value="224535004" data-display="Registered nurse">224535004 - Registered nurse</option>
+                                <option value="224930009" data-display="Clinical nurse specialist">224930009 - Clinical nurse specialist</option>
+                                <option value="159026005" data-display="Midwife">159026005 - Midwife</option>
+                                <option value="224546007" data-display="Nurse practitioner">224546007 - Nurse practitioner</option>
+                                <option value="224534000" data-display="Operating theater nurse">224534000 - Operating theater nurse</option>
+                                <option value="224537007" data-display="Critical care nurse">224537007 - Critical care nurse</option>
+                            </optgroup>
+
+                            <optgroup label="Dental Care">
+                                <option value="106289002" data-display="Dentist">106289002 - Dentist</option>
+                                <option value="309453006" data-display="Dental surgeon">309453006 - Dental surgeon / Oral surgeon</option>
+                                <option value="309450009" data-display="Orthodontist">309450009 - Orthodontist</option>
+                                <option value="309448000" data-display="Pediatric dentist">309448000 - Pediatric dentist</option>
+                            </optgroup>
+
+                            <optgroup label="Pharmacy & Diagnostics">
+                                <option value="46255001" data-display="Pharmacist">46255001 - Pharmacist</option>
+                                <option value="309459005" data-display="Clinical pharmacist">309459005 - Clinical pharmacist</option>
+                                <option value="224608005" data-display="Medical laboratory scientist">224608005 - Medical Laboratory Scientist</option>
+                                <option value="159016003" data-display="Radiographer">159016003 - Radiographer / Imaging Technologist</option>
+                            </optgroup>
+
+                            <optgroup label="Allied Health & Emergency Services">
+                                <option value="36682004" data-display="Physiotherapist">36682004 - Physiotherapist</option>
+                                <option value="80546007" data-display="Occupational therapist">80546007 - Occupational therapist</option>
+                                <option value="59944000" data-display="Psychologist">59944000 - Psychologist</option>
+                                <option value="106328005" data-display="Social worker">106328005 - Social worker</option>
+                                <option value="159002003" data-display="Dietitian">159002003 - Dietitian / Nutritionist</option>
+                                <option value="309418004" data-display="Speech therapist">309418004 - Speech and language therapist</option>
+                                <option value="133932002" data-display="Paramedic">133932002 - Paramedic</option>
+                                <option value="116154003" data-display="Emergency medical technician">116154003 - Emergency Medical Technician (EMT)</option>
+                            </optgroup>
+
+                            <optgroup label="Custom Option">
+                                <option value="custom" data-display="Custom Role">Custom SNOMED Code...</option>
+                            </optgroup>
+                        </select>
+                    </div>
+
+                    <!-- Custom Role Inputs (hidden unless 'custom' is selected) -->
+                    <div id="customRoleContainer" style="display: none; grid-template-columns: 1fr 1.25fr; gap: 0.75rem; margin-bottom: 1rem;">
+                        <div class="form-group">
+                            <label for="roleCode">Custom Role Code</label>
+                            <input type="text" id="roleCode" class="form-control" value="158965000" placeholder="158965000">
+                        </div>
+                        <div class="form-group">
+                            <label for="roleDisplay">Custom Role Display</label>
+                            <input type="text" id="roleDisplay" class="form-control" value="Medical practitioner" placeholder="Medical practitioner">
+                        </div>
+                    </div>
+
+                    <!-- Team Code & Active Toggle -->
+                    <div style="display: grid; grid-template-columns: 1fr 1.25fr; gap: 0.75rem; align-items: center;">
+                        <div class="form-group">
+                            <label for="teamCode">Team Code</label>
+                            <input type="text" id="teamCode" class="form-control" value="TEAM01" placeholder="e.g. TEAM01">
+                        </div>
+                        <div class="form-group checkbox-group" style="margin-top: 1.4rem;">
+                            <input type="checkbox" id="activeStatus" checked>
+                            <label for="activeStatus" style="margin-bottom:0; cursor: pointer;">Active Status</label>
+                        </div>
+                    </div>
+
+                    <!-- Form Action Button -->
+                    <button type="submit" class="btn-submit">🚀 Save & Create PractitionerRole (POST)</button>
+                </form>
+            </div>
+
+            <!-- Right Column: Live JSON Preview & Quick Actions -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Generated PractitionerRole FHIR JSON</h3>
+                </div>
+
+                <pre id="jsonPreview" class="json-viewer">Loading JSON preview...</pre>
+
+                <div class="btn-action-group">
+                    <button type="button" class="btn-secondary" onclick="copyJsonToClipboard()">📋 Copy JSON</button>
+                    <button type="button" class="btn-secondary" onclick="downloadJsonFile()">💾 Download JSON File</button>
+                </div>
+
+                <div id="submissionResult" style="display: none;"></div>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             BOTTOM SECTION: PRACTITIONER ROLES DIRECTORY TABLE & SEARCH/PAGINATION
+             =================================================================== -->
+        <div id="rolesDirectoryCard" class="card" style="margin-top: 1rem;">
+            <div class="card-header">
+                <h3 class="card-title">📁 Practitioner Roles Directory (Descending Order)</h3>
+                <div style="display:flex; gap:0.5rem;">
+                    <button type="button" class="btn-small" onclick="fetchAndRenderPractitionerRoles()">↻ Refresh Directory</button>
+                </div>
+            </div>
+            <span id="rolesListStatus" class="status-badge" style="margin-bottom: 1rem;">Loading PractitionerRoles...</span>
+
+            <!-- Filter Controls Bar for Practitioner Roles -->
+            <div class="filter-bar" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: flex-end; background: #f8fafc; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color);">
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.2rem;">Filter Practitioner / Role ID</label>
+                    <input type="text" id="filterRolePractitioner" class="form-control" placeholder="Search Practitioner or Role ID..." oninput="applyPractitionerRoleFilters()">
+                </div>
+
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.2rem;">Filter Organization</label>
+                    <select id="filterRoleOrganization" class="form-control" onchange="applyPractitionerRoleFilters()">
+                        <option value="">All Organizations</option>
+                    </select>
+                </div>
+
+                <div style="width: 160px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.2rem;">Filter Code / Display</label>
+                    <input type="text" id="filterRoleCode" class="form-control" placeholder="e.g. Medical..." oninput="applyPractitionerRoleFilters()">
+                </div>
+
+                <div style="width: 130px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.2rem;">Active Status</label>
+                    <select id="filterRoleActive" class="form-control" onchange="applyPractitionerRoleFilters()">
+                        <option value="">All Statuses</option>
+                        <option value="true">Active Only</option>
+                        <option value="false">Inactive Only</option>
+                    </select>
+                </div>
+
+                <div>
+                    <button type="button" class="btn-small" onclick="clearPractitionerRoleFilters()">🧹 Clear</button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div style="overflow-x: auto;">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Role ID</th>
+                            <th>Practitioner Reference</th>
+                            <th>Organization Reference</th>
+                            <th>Role Coding</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="rolesListTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center">Loading PractitionerRoles directory...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Bar for Roles -->
+            <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted-text);">
+                    <label for="rolePageSize">Show</label>
+                    <select id="rolePageSize" class="form-control" style="width: 70px; padding: 0.3rem;" onchange="changePractitionerRolePageSize(this.value)">
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    <span>entries per page</span>
+                </div>
+
+                <div id="rolePaginationInfo" style="font-size: 0.85rem; color: var(--muted-text);">
+                    Showing 0 to 0 of 0 entries
+                </div>
+
+                <div id="rolePaginationButtons" style="display: flex; gap: 0.25rem;">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="practitioner_roles.js"></script>
+</body>
+</html>
