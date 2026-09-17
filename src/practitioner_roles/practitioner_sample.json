@@ -1,0 +1,38 @@
+{
+  "resourceType": "Practitioner",
+  "id": "PRAC-1001",
+  "meta": {
+    "profile": [
+      "https://fhir.doh.gov.ph/pheref/StructureDefinition/ereferral-practitioner"
+    ]
+  },
+  "identifier": [
+    {
+      "system": "http://example.org/practitioner-id",
+      "value": "PRAC-1001"
+    }
+  ],
+  "active": true,
+  "name": [
+    {
+      "use": "official",
+      "family": "Dela Cruz",
+      "given": [
+        "Juan"
+      ]
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "+639123456789",
+      "use": "mobile"
+    },
+    {
+      "system": "email",
+      "value": "juan.delacruz@example.com"
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1980-01-01"
+}
