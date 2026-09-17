@@ -1,13 +1,30 @@
 // Controller - Practitioner CRUD
 const FHIR_BASE = 'https://cdr.pheref.fhirlab.net/fhir';
+const PAGE_SIZE = 10;
 
-async function listPractitioners() {
-    const response = await fetch(`${FHIR_BASE}/Practitioner?_sort=-_lastUpdated&_count=50`);
+let currentPageNumber = 1;
+let nextPageUrl = null;
+let prevPageUrl = null;
+
+function firstPageUrl() {
+    return `${FHIR_BASE}/Practitioner?_sort=-_lastUpdated&_count=${PAGE_SIZE}&_total=accurate`;
+}
+
+async function fetchPractitionerPage(url) {
+    const response = await fetch(url);
     if (!response.ok) {
         throw new Error(`Failed to load practitioners (${response.status})`);
     }
     const bundle = await response.json();
-    return (bundle.entry || []).map(entry => Practitioner.fromFhirJson(entry.resource));
+    const links = bundle.link || [];
+    const findLink = rel => (links.find(l => l.relation === rel) || {}).url || null;
+
+    return {
+        practitioners: (bundle.entry || []).map(entry => Practitioner.fromFhirJson(entry.resource)),
+        total: typeof bundle.total === 'number' ? bundle.total : (bundle.entry || []).length,
+        nextUrl: findLink('next'),
+        prevUrl: findLink('previous') || findLink('prev')
+    };
 }
 
 async function createPractitioner(practitioner) {
@@ -111,7 +128,37 @@ function renderPractitioners(practitioners) {
     });
 }
 
-function renderSkeletonRows(rowCount = 5) {
+function paginationControls() {
+    return document.getElementById('pagination-controls');
+}
+
+function renderPaginationControls(totalCount) {
+    const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+    const container = paginationControls();
+    container.innerHTML = `
+        <span class="pagination-info">Page ${currentPageNumber} of ${totalPages} (${totalCount} total)</span>
+        <div class="pagination-buttons">
+            <button type="button" id="prev-page-btn" class="secondary-btn" ${prevPageUrl ? '' : 'disabled'}>Previous</button>
+            <button type="button" id="next-page-btn" class="secondary-btn" ${nextPageUrl ? '' : 'disabled'}>Next</button>
+        </div>
+    `;
+
+    document.getElementById('prev-page-btn').addEventListener('click', () => {
+        if (prevPageUrl) {
+            currentPageNumber -= 1;
+            refreshList(prevPageUrl);
+        }
+    });
+
+    document.getElementById('next-page-btn').addEventListener('click', () => {
+        if (nextPageUrl) {
+            currentPageNumber += 1;
+            refreshList(nextPageUrl);
+        }
+    });
+}
+
+function renderSkeletonRows(rowCount = PAGE_SIZE) {
     const body = tableBody();
     body.innerHTML = '';
 
@@ -130,14 +177,21 @@ function renderSkeletonRows(rowCount = 5) {
     }
 }
 
-async function refreshList() {
+async function refreshList(url) {
     renderSkeletonRows();
+    if (!url) {
+        currentPageNumber = 1;
+    }
     try {
-        const practitioners = await listPractitioners();
+        const { practitioners, total, nextUrl, prevUrl } = await fetchPractitionerPage(url || firstPageUrl());
+        nextPageUrl = nextUrl;
+        prevPageUrl = prevUrl;
         renderPractitioners(practitioners);
+        renderPaginationControls(total);
     } catch (err) {
         showStatus(err.message, true);
         tableBody().innerHTML = '';
+        paginationControls().innerHTML = '';
     }
 }
 

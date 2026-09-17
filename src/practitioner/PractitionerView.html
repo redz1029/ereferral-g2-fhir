@@ -190,6 +190,30 @@
             0% { background-position: 100% 50%; }
             100% { background-position: 0 50%; }
         }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
     </style>
 </head>
 <body>
@@ -251,6 +275,7 @@
                 </thead>
                 <tbody id="practitioner-table-body"></tbody>
             </table>
+            <div id="pagination-controls" class="pagination"></div>
         </section>
     </main>
 
