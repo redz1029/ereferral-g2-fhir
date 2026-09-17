@@ -1,0 +1,32 @@
+{
+  "resourceType": "PractitionerRole",
+  "meta": {
+    "profile": [
+      "https://fhir.doh.gov.ph/pheref/StructureDefinition/ereferral-practitioner-role"
+    ]
+  },
+  "identifier": [
+    {
+      "system": "http://example.org/training-practitioner-role-id",
+      "value": "TEAM01-REFERRER-ROLE"
+    }
+  ],
+  "active": true,
+  "practitioner": {
+    "reference": "Practitioner/12345"
+  },
+  "organization": {
+    "reference": "Organization/67890"
+  },
+  "code": [
+    {
+      "coding": [
+        {
+          "system": "http://snomed.info/sct",
+          "code": "158965000",
+          "display": "Medical practitioner"
+        }
+      ]
+    }
+  ]
+}

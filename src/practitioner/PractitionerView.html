@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Practitioners - e-Referral Group 2 FHIR</title>
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --nav-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        header {
+            background-color: var(--nav-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        .nav-btn {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            padding: 0.5rem 1.25rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .nav-btn:active {
+            transform: translateY(1px);
+        }
+
+        main {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+        }
+
+        .card {
+            background-color: var(--nav-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h2 {
+            font-size: 1.15rem;
+            margin-bottom: 1rem;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        input, select {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 0.95rem;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        .secondary-btn {
+            background-color: #ffffff;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+            padding: 0.5rem 1.25rem;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            cursor: pointer;
+        }
+
+        .secondary-btn:hover {
+            background-color: var(--bg-color);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.6rem 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+        }
+
+        .action-btn {
+            border: none;
+            border-radius: 0.375rem;
+            padding: 0.3rem 0.7rem;
+            font-size: 0.85rem;
+            cursor: pointer;
+            margin-right: 0.4rem;
+        }
+
+        .edit-btn {
+            background-color: #e2e8f0;
+            color: var(--text-color);
+        }
+
+        .delete-btn {
+            background-color: #fee2e2;
+            color: #dc2626;
+        }
+
+        #status-message {
+            min-height: 1.2rem;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+        }
+
+        .skeleton {
+            display: inline-block;
+            height: 0.85rem;
+            border-radius: 0.25rem;
+            background: linear-gradient(90deg, #e2e8f0 25%, #edf1f5 37%, #e2e8f0 63%);
+            background-size: 400% 100%;
+            animation: skeleton-loading 1.4s ease infinite;
+        }
+
+        .action-btn.skeleton {
+            height: 1.6rem;
+            width: 3.5rem;
+            border-radius: 0.375rem;
+            margin-right: 0.4rem;
+        }
+
+        @keyframes skeleton-loading {
+            0% { background-position: 100% 50%; }
+            100% { background-position: 0 50%; }
+        }
+
+        .pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .pagination-info {
+            font-size: 0.85rem;
+            color: #64748b;
+        }
+
+        .pagination-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .pagination-buttons button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1>Practitioners</h1>
+            <nav aria-label="Main Navigation" style="display: flex; gap: 0.5rem; align-items: center;">
+                <a class="nav-btn" href="../../index.html">&larr; Back to Home</a>
+                <a class="nav-btn" href="../../index.html">Patient</a>
+                <a class="nav-btn" href="../Organization/OrganizationView.html">Organization</a>
+                <a class="nav-btn" href="PractitionerView.html">Practitioner</a>
+                <a class="nav-btn" href="../practitioner_roles/index.html">Practitioner Roles</a>
+            </nav>
+        </div>
+    </header>
+    <main>
+        <div id="status-message"></div>
+
+        <section class="card">
+            <h2 id="form-title">Add Practitioner</h2>
+            <form id="practitioner-form">
+                <input type="hidden" name="practitioner-id">
+                <div class="form-grid">
+                    <div>
+                        <label for="given">Given Name</label>
+                        <input type="text" name="given" id="given">
+                    </div>
+                    <div>
+                        <label for="family">Family Name</label>
+                        <input type="text" name="family" id="family">
+                    </div>
+                    <div>
+                        <label for="qualification">Qualification</label>
+                        <input type="text" name="qualification" id="qualification" placeholder="e.g. Doctor of Medicine">
+                    </div>
+                    <div>
+                        <label for="telecom-system">Telecom Type</label>
+                        <select name="telecom-system" id="telecom-system">
+                            <option value="phone">Phone</option>
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="telecom-value">Telecom Value</label>
+                        <input type="text" name="telecom-value" id="telecom-value" placeholder="e.g. +63-917-000-0000">
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="nav-btn">Save</button>
+                    <button type="button" id="cancel-btn" class="secondary-btn">Cancel</button>
+                </div>
+            </form>
+        </section>
+
+        <section class="card">
+            <h2>Practitioner List</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Qualification</th>
+                        <th>Telecom</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="practitioner-table-body"></tbody>
+            </table>
+            <div id="pagination-controls" class="pagination"></div>
+        </section>
+    </main>
+
+    <script src="Practitioner.js"></script>
+    <script src="PractitionerController.js"></script>
+</body>
+</html>
