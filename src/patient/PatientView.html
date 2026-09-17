@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patient Directory - e-Referral Group 2 FHIR</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f7fa;
+            color: #1f2937;
+        }
+
+        header {
+            background: #ffffff;
+            border-bottom: 1px solid #ddd;
+            padding: 18px 30px;
+        }
+
+        .header-container {
+            max-width: 1200px;
+            margin: auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 22px;
+        }
+
+        nav {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .nav-btn {
+            border: none;
+            background: #2563eb;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .nav-btn:hover {
+            background: #1d4ed8;
+        }
+
+        .nav-btn-secondary {
+            background: #ffffff;
+            color: #1f2937;
+            border: 1px solid #d1d5db;
+        }
+
+        .nav-btn-secondary:hover {
+            background: #f3f4f6;
+        }
+
+        main {
+            max-width: 1250px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 25px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+        }
+
+        .page-header h2 {
+            margin: 0 0 5px;
+            font-size: 22px;
+        }
+
+        .page-header p {
+            margin: 0;
+            color: #6b7280;
+            font-size: 14px;
+        }
+
+        .toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+
+        .entries-control {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 14px;
+        }
+
+        .entries-control select,
+        .search-input {
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            padding: 9px 10px;
+            background: white;
+            font-size: 14px;
+        }
+
+        .search-box {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 14px;
+        }
+
+        .search-input {
+            width: 240px;
+        }
+
+        .btn {
+            border: none;
+            padding: 9px 14px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .btn-primary {
+            background: #2563eb;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #111827;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        .btn-edit {
+            background: #eef2ff;
+            color: #3730a3;
+            border: 1px solid #c7d2fe;
+        }
+
+        .btn-edit:hover {
+            background: #e0e7ff;
+        }
+
+        .btn-danger {
+            background: #fef2f2;
+            color: #dc2626;
+            border: 1px solid #fecaca;
+        }
+
+        .btn-danger:hover {
+            background: #fee2e2;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        /* TABLE */
+
+        .table-wrapper {
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1050px;
+        }
+
+        thead {
+            background: #f8fafc;
+        }
+
+        th {
+            text-align: left;
+            padding: 13px 12px;
+            font-size: 12px;
+            color: #475569;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: 13px 12px;
+            font-size: 13px;
+            border-bottom: 1px solid #eef2f7;
+            vertical-align: middle;
+        }
+
+        tbody tr:hover {
+            background: #fafafa;
+        }
+
+        .fhir-id {
+            display: inline-block;
+            padding: 4px 8px;
+            border: 1px solid #dbeafe;
+            background: #eff6ff;
+            color: #1d4ed8;
+            border-radius: 5px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .patient-name {
+            font-weight: 600;
+            color: #111827;
+        }
+
+        .sub-text {
+            display: block;
+            margin-top: 3px;
+            color: #6b7280;
+            font-size: 11px;
+        }
+
+        .gender-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .gender-male {
+            background: #e0f2fe;
+            color: #0369a1;
+        }
+
+        .gender-female {
+            background: #fce7f3;
+            color: #be185d;
+        }
+
+        .gender-other,
+        .gender-unknown {
+            background: #f3f4f6;
+            color: #4b5563;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 6px;
+            white-space: nowrap;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 45px 20px;
+            color: #6b7280;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 45px;
+            color: #6b7280;
+        }
+
+        .status {
+            padding: 12px 15px;
+            background: #f0fdf4;
+            border: 1px solid #bbf7d0;
+            color: #166534;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .error {
+            padding: 15px;
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+            border-radius: 5px;
+        }
+
+        /* PAGINATION */
+
+        .table-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+
+        .showing-info {
+            font-size: 13px;
+            color: #6b7280;
+        }
+
+        .pagination {
+            display: flex;
+            gap: 4px;
+            align-items: center;
+        }
+
+        .page-btn {
+            min-width: 34px;
+            height: 34px;
+            border: 1px solid #d1d5db;
+            background: white;
+            color: #374151;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #f3f4f6;
+        }
+
+        .page-btn.active {
+            background: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+        }
+
+        /* MODAL */
+
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.45);
+            z-index: 999;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: white;
+            width: 100%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow-y: auto;
+            border-radius: 8px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+        }
+
+        .modal-header {
+            padding: 18px 22px;
+            border-bottom: 1px solid #ddd;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            margin: 0;
+            font-size: 19px;
+        }
+
+        .close-btn {
+            border: none;
+            background: transparent;
+            font-size: 25px;
+            cursor: pointer;
+            color: #6b7280;
+        }
+
+        .modal-body {
+            padding: 22px;
+        }
+
+        .modal-footer {
+            padding: 15px 22px;
+            border-top: 1px solid #ddd;
+            display: flex;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+
+        .form-section {
+            margin-bottom: 25px;
+        }
+
+        .form-section h3 {
+            margin: 0 0 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 15px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group.full {
+            grid-column: 1 / -1;
+        }
+
+        .form-group label {
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #cbd5e1;
+            border-radius: 5px;
+            background: white;
+            font-size: 14px;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #2563eb;
+        }
+
+        .required {
+            color: #dc2626;
+        }
+
+        .form-note {
+            color: #6b7280;
+            font-size: 11px;
+            margin-top: 5px;
+        }
+
+        .readonly {
+            background: #f3f4f6 !important;
+            color: #6b7280;
+        }
+
+        @media (max-width: 700px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .form-group.full {
+                grid-column: auto;
+            }
+
+            .search-input {
+                width: 180px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header>
+        <div class="header-container">
+            <h1>e-Referral Group 2 FHIR</h1>
+            <nav aria-label="Main Navigation">
+                <a href="../../index.html" class="nav-btn nav-btn-secondary">&larr; Back to Home</a>
+                <a href="PatientView.html" class="nav-btn" id="btn-patient">Patient</a>
+                <a href="../Organization/OrganizationView.html" class="nav-btn" id="btn-organization">Organization</a>
+                <a href="../practitioner/PractitionerView.html" class="nav-btn" id="btn-practitioners">Practitioner</a>
+                <a href="../practitioner_roles/index.html" class="nav-btn" id="btn-practitioner-roles">Practitioner Roles</a>
+                <a href="../referral/index.html" class="nav-btn" id="btn-referrals">e-Referral</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div id="content">
+            <div class="card">
+                <div class="loading">
+                    Loading Patient Directory...
+                </div>
+            </div>
+        </div>
+    </main>
+
+<!-- ==========================================================
+     PATIENT MODAL
+========================================================== -->
+
+<div class="modal-overlay" id="patientModal">
+
+    <div class="modal">
+
+        <div class="modal-header">
+
+            <h2 id="modalTitle">
+                Add Patient
+            </h2>
+
+            <button
+                type="button"
+                class="close-btn"
+                id="closeModal">
+                &times;
+            </button>
+
+        </div>
+
+
+        <form id="patientForm">
+
+            <div class="modal-body">
+
+                <!-- PERSONAL INFORMATION -->
+
+                <div class="form-section">
+
+                    <h3>Personal Information</h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>
+                                First Name
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="firstName"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Middle Name
+                            </label>
+
+                            <input
+                                type="text"
+                                id="middleName"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Last Name
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="lastName"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Gender
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="gender"
+                                required>
+
+                                <option value="">
+                                    Select Gender
+                                </option>
+
+                                <option value="male">
+                                    Male
+                                </option>
+
+                                <option value="female">
+                                    Female
+                                </option>
+
+                                <option value="other">
+                                    Other
+                                </option>
+
+                                <option value="unknown">
+                                    Unknown
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Birth Date
+                            </label>
+
+                            <input
+                                type="date"
+                                id="birthDate"
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Phone
+                            </label>
+
+                            <input
+                                type="text"
+                                id="phone"
+                                placeholder="+639XXXXXXXXX"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ADDRESS -->
+
+                <div class="form-section">
+
+                    <h3>Address</h3>
+
+                    <div class="form-grid">
+
+                        <div class="form-group">
+
+                            <label>
+                                Region
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="region"
+                                required>
+
+                                <option value="">
+                                    Select Region
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Province
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="province"
+                                required
+                                disabled>
+
+                                <option value="">
+                                    Select Province
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Municipality / City
+                                <span class="required">*</span>
+                            </label>
+
+                            <select
+                                id="municipality"
+                                required
+                                disabled>
+
+                                <option value="">
+                                    Select Municipality / City
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Barangay
+                                <span class="required" id="barangayRequiredMark">*</span>
+                            </label>
+
+                            <select
+                                id="barangay"
+                                required
+                                disabled>
+
+                                <option value="">
+                                    Select Barangay
+                                </option>
+
+                            </select>
+
+                        </div>
+
+
+                        <div class="form-group full">
+
+                            <label>
+                                Address
+                            </label>
+
+                            <input
+                                type="text"
+                                id="addressLine"
+                                placeholder="House No., Street, etc."
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Postal Code
+                                <span class="required">*</span>
+                            </label>
+
+                            <input
+                                type="text"
+                                id="postalCode"
+                                required
+                            >
+
+                        </div>
+
+
+                        <div class="form-group">
+
+                            <label>
+                                Country
+                            </label>
+
+                            <input
+                                type="text"
+                                id="country"
+                                value="PH"
+                            >
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- FHIR ID -->
+
+                <div
+                    class="form-section"
+                    id="editIdSection"
+                    style="display:none;">
+
+                    <h3>FHIR Resource</h3>
+
+                    <div class="form-group">
+
+                        <label>
+                            FHIR ID
+                        </label>
+
+                        <input
+                            type="text"
+                            id="editPatientId"
+                            class="readonly"
+                            readonly
+                        >
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <div class="modal-footer">
+
+                <button
+                    type="button"
+                    class="btn btn-secondary"
+                    id="cancelModal">
+                    Cancel
+                </button>
+
+                <button
+                    type="submit"
+                    class="btn btn-primary"
+                    id="savePatientBtn">
+                    Save Patient
+                </button>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+    <script src="Patient.js"></script>
+    <script src="PatientController.js"></script>
+</body>
+</html>

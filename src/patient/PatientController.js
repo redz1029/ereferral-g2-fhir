@@ -36,6 +36,12 @@
         );
 
 
+    // Load the directory as soon as this page opens (e.g. via
+    // another module's "Patient" link), instead of waiting for
+    // an in-page click that will never happen on a fresh navigation.
+    loadPatients();
+
+
    // ==========================================================
 // LOAD PATIENT DIRECTORY
 // ==========================================================
