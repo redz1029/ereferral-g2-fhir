@@ -781,17 +781,18 @@
                     <thead>
                         <tr>
                             <th>Referral ID</th>
+                            <th>Date &amp; Time</th>
                             <th>Patient</th>
                             <th>Where From (Sending)</th>
                             <th>Where To (Receiving)</th>
-                            <th>Chief Complaint & Diagnosis</th>
-                            <th>Priority</th>
+                            <th>Chief Complaint &amp; Diagnosis</th>
+                            <th>Priority &amp; Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="referralsListTableBody">
                         <tr>
-                            <td colspan="7" class="text-center">Loading e-Referrals directory...</td>
+                            <td colspan="8" class="text-center">Loading e-Referrals directory...</td>
                         </tr>
                     </tbody>
                 </table>
@@ -872,6 +873,21 @@
             <div class="modal-footer">
                 <button type="button" class="btn-small" onclick="closeChangeStatusModal()">Cancel</button>
                 <button type="button" class="btn-submit" style="width: auto; margin-top: 0; background-color: #0284c7;" onclick="confirmReferralStatusChange()">💾 Save Status & Remarks</button>
+            </div>
+        </div>
+    <!-- View ServiceRequest FHIR Resource JSON Modal Dialog -->
+    <div id="referralJsonModal" class="modal-backdrop" style="display:none;" onclick="if(event.target === this) closeReferralJsonModal();">
+        <div class="modal-card" style="max-width: 850px; width: 92%;">
+            <div class="modal-header" style="background: #1e293b;">
+                <h3 id="modalReferralJsonTitle">📄 ServiceRequest FHIR Resource JSON</h3>
+                <button type="button" class="modal-close" onclick="closeReferralJsonModal()">✖</button>
+            </div>
+            <div class="modal-body" style="padding: 1rem;">
+                <pre style="background: #0f172a; color: #38bdf8; padding: 1rem; border-radius: 0.5rem; font-family: monospace; font-size: 0.85rem; max-height: 480px; overflow-y: auto; white-space: pre-wrap; word-break: break-all;"><code id="modalReferralJsonCode"></code></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-small" onclick="copyReferralJsonModalText()">📋 Copy ServiceRequest JSON</button>
+                <button type="button" class="btn-submit" style="width:auto; margin-top:0;" onclick="closeReferralJsonModal()">Close</button>
             </div>
         </div>
     </div>

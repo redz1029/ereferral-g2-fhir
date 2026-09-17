@@ -9,7 +9,7 @@
  */
 
 const DEFAULT_FHIR_SERVER = 'https://cdr.pheref.fhirlab.net/fhir';
-const FETCH_TIMEOUT_MS = 6000;
+const FETCH_TIMEOUT_MS = 25000;
 
 // State Cache
 let loadedReferralsCache = [];
@@ -61,7 +61,9 @@ const FALLBACK_REFERRALS = [
         icdDisplay: 'Essential (primary) hypertension',
         priority: 'urgent',
         note: 'Patient requires urgent specialized cardiology evaluation.',
-        lastUpdated: '2026-09-17T08:00:00.000Z'
+        authoredOn: '2026-09-17T08:00:00.000Z',
+        lastUpdated: '2026-09-17T08:00:00.000Z',
+        timestamp: '2026-09-17T08:00:00.000Z'
     },
     {
         id: 'REF-2026-002',
@@ -76,7 +78,9 @@ const FALLBACK_REFERRALS = [
         icdDisplay: 'Type 2 diabetes mellitus without complications',
         priority: 'routine',
         note: 'Routine endocrinology referral for blood sugar optimization.',
-        lastUpdated: '2026-09-16T14:30:00.000Z'
+        authoredOn: '2026-09-16T14:30:00.000Z',
+        lastUpdated: '2026-09-16T14:30:00.000Z',
+        timestamp: '2026-09-16T14:30:00.000Z'
     }
 ];
 
@@ -143,6 +147,19 @@ function initSelect2(elementId, placeholder) {
             });
         }
     }
+}
+
+/**
+ * Helper to extract resource ID from reference or URL
+ */
+function extractResourceTargetId(refStr) {
+    if (!refStr) return '';
+    let str = String(refStr).trim();
+    if (str.includes('/')) {
+        const parts = str.split('/');
+        str = parts[parts.length - 1];
+    }
+    return str.trim().toLowerCase();
 }
 
 /**
@@ -309,35 +326,66 @@ function getPatientNameById(patientId) {
 }
 
 /**
+ * Helper to format ISO timestamp for Referral Table display
+ */
+function formatReferralTimestamp(isoStr) {
+    if (!isoStr) return '<span style="color:var(--muted-text); font-size:0.8rem;">N/A</span>';
+    try {
+        const d = new Date(isoStr);
+        if (isNaN(d.getTime())) return isoStr;
+        
+        const datePart = d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: '2-digit' });
+        const timePart = d.toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        
+        return `<div style="font-weight:600; font-size:0.84rem; color:#0f172a; white-space:nowrap;">📅 ${datePart}</div><div style="font-size:0.76rem; color:var(--muted-text); white-space:nowrap;">⏰ ${timePart}</div>`;
+    } catch (e) {
+        return isoStr;
+    }
+}
+
+/**
  * Generic FHIR Pagination Fetcher
  */
-async function fetchAllFhirResources(resourceType, serverUrl, statusEl) {
+async function fetchAllFhirResources(resourceType, serverUrl, statusEl, maxCount = 200) {
     let allEntries = [];
-    let nextUrl = `${serverUrl}/${resourceType}?_count=100`;
+    const separator = resourceType.includes('?') ? '&' : '?';
+    const pageCount = Math.min(maxCount, 100);
+    let nextUrl = `${serverUrl}/${resourceType}${separator}_count=${pageCount}`;
     let page = 1;
 
-    while (nextUrl && allEntries.length < 2000) {
+    while (nextUrl && allEntries.length < maxCount) {
         if (statusEl) {
-            statusEl.textContent = `Fetching all ${resourceType}s (Page ${page}, ${allEntries.length} loaded)...`;
+            statusEl.textContent = `Fetching ${resourceType}s (Page ${page}, ${allEntries.length} loaded)...`;
         }
 
-        const response = await fetchWithTimeout(nextUrl, {
-            headers: { 'Accept': 'application/fhir+json, application/json' },
-            timeout: FETCH_TIMEOUT_MS
-        });
+        try {
+            const response = await fetchWithTimeout(nextUrl, {
+                headers: { 'Accept': 'application/fhir+json, application/json' },
+                timeout: FETCH_TIMEOUT_MS
+            });
 
-        if (!response.ok) {
+            if (!response.ok) {
+                if (allEntries.length > 0) break;
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            const entries = data.entry || [];
+            allEntries = allEntries.concat(entries);
+
+            if (allEntries.length >= maxCount) {
+                allEntries = allEntries.slice(0, maxCount);
+                break;
+            }
+
+            const nextLink = (data.link || []).find(l => l.relation === 'next');
+            nextUrl = nextLink ? nextLink.url : null;
+            page++;
+        } catch (err) {
+            console.warn(`Fetch step error for ${resourceType} on page ${page}:`, err.message);
             if (allEntries.length > 0) break;
-            throw new Error(`HTTP error! Status: ${response.status}`);
+            throw err;
         }
-
-        const data = await response.json();
-        const entries = data.entry || [];
-        allEntries = allEntries.concat(entries);
-
-        const nextLink = (data.link || []).find(l => l.relation === 'next');
-        nextUrl = nextLink ? nextLink.url : null;
-        page++;
     }
 
     return allEntries;
@@ -661,6 +709,7 @@ async function fetchPractitionerRoles() {
         const receivingOrgVal = document.getElementById('receivingOrgSelect')?.value || '';
         updateSendingRoleOptions(sendingOrgVal);
         updateReceivingRoleOptions(receivingOrgVal);
+        reResolveReferralRoleOrganizations();
     } catch (err) {
         console.warn('PractitionerRole fetch timed out/failed. Using fallback:', err.message);
         loadFallbackPractitionerRoles('⚠️ Server connection timed out. Loaded sample PractitionerRoles.');
@@ -790,11 +839,20 @@ function buildEreferralBundleJSON() {
     const performers = [];
     if (receivingOrgId) {
         performers.push({ "reference": `Organization/${receivingOrgId}` });
-    } else {
-        performers.push({ "reference": "Organization/SLMC-ORG-002" });
     }
     if (receivingRoleId) {
         performers.push({ "reference": `PractitionerRole/${receivingRoleId}` });
+    }
+    if (performers.length === 0) {
+        performers.push({ "reference": "Organization/SLMC-ORG-002" });
+    }
+
+    // Requester reference (Sending PractitionerRole or Sending Organization)
+    let requesterRef = "Organization/PGH-ORG-001";
+    if (sendingRoleId) {
+        requesterRef = `PractitionerRole/${sendingRoleId}`;
+    } else if (sendingOrgId) {
+        requesterRef = `Organization/${sendingOrgId}`;
     }
 
     // Reason codes list (SNOMED CT Service Type & ICD-10 Diagnosis narrative)
@@ -835,7 +893,7 @@ function buildEreferralBundleJSON() {
         "resourceType": "ServiceRequest",
         "meta": {
             "profile": [
-                "https://fhir.doh.gov.ph/pheref/StructureDefinition/ereferral-service-request"
+                "https://www.fhir.doh.gov.ph/pheref/StructureDefinition/ereferral-service-request"
             ]
         },
         "text": {
@@ -880,7 +938,7 @@ function buildEreferralBundleJSON() {
         "occurrenceDateTime": nowIso,
         "authoredOn": nowIso,
         "requester": {
-          "reference": sendingOrgId ? `Organization/${sendingOrgId}` : "Organization/PGH-ORG-001"
+          "reference": requesterRef
         },
         "performer": performers,
         "reasonCode": reasonCodes
@@ -907,7 +965,7 @@ function buildEreferralBundleJSON() {
             "resourceType": "Encounter",
             "meta": {
                 "profile": [
-                    "https://fhir.doh.gov.ph/pheref/StructureDefinition/ereferral-encounter"
+                    "https://www.fhir.doh.gov.ph/pheref/StructureDefinition/ereferral-encounter"
                 ]
             },
             "text": {
@@ -1333,6 +1391,99 @@ async function submitEreferralBundle(event) {
    ========================================================================== */
 
 /**
+ * Helper to resolve Organization reference from a PractitionerRole reference
+ */
+function getOrgRefFromRoleRef(roleRef) {
+    if (!roleRef) return '';
+    const cleanRoleId = extractResourceTargetId(roleRef);
+    if (!cleanRoleId) return '';
+    const foundRole = loadedPractitionerRolesCache.find(r => extractResourceTargetId(r.id) === cleanRoleId);
+    if (foundRole && foundRole.orgRef) {
+        return foundRole.orgRef;
+    }
+    return '';
+}
+
+/**
+ * Re-resolves sendingOrgRef and receivingOrgRef for loaded referrals after PractitionerRoles finish loading or are fetched on-demand
+ */
+function reResolveReferralRoleOrganizations() {
+    if (!loadedReferralsCache || loadedReferralsCache.length === 0) return;
+    let updatedCount = 0;
+    loadedReferralsCache.forEach(ref => {
+        if (ref.receivingRoleRef) {
+            const resolvedOrg = getOrgRefFromRoleRef(ref.receivingRoleRef);
+            if (resolvedOrg && (!ref.receivingOrgRef || ref.receivingOrgRef === ref.receivingRoleRef)) {
+                ref.receivingOrgRef = resolvedOrg;
+                updatedCount++;
+            }
+        }
+        if (ref.sendingRoleRef) {
+            const resolvedOrg = getOrgRefFromRoleRef(ref.sendingRoleRef);
+            if (resolvedOrg && (!ref.sendingOrgRef || ref.sendingOrgRef === ref.sendingRoleRef)) {
+                ref.sendingOrgRef = resolvedOrg;
+                updatedCount++;
+            }
+        }
+    });
+    applyReferralFilters();
+}
+
+/**
+ * Fetch missing PractitionerRoles referenced by e-Referrals on-demand
+ */
+async function fetchMissingRoleOrganizations(referrals) {
+    if (!referrals || !Array.isArray(referrals)) return;
+    const serverUrl = getFhirServerUrl();
+    const missingRoleIds = new Set();
+
+    referrals.forEach(ref => {
+        if (ref.receivingRoleRef) {
+            const roleId = extractResourceTargetId(ref.receivingRoleRef);
+            if (roleId && !loadedPractitionerRolesCache.some(r => extractResourceTargetId(r.id) === roleId)) {
+                missingRoleIds.add(roleId);
+            }
+        }
+        if (ref.sendingRoleRef) {
+            const roleId = extractResourceTargetId(ref.sendingRoleRef);
+            if (roleId && !loadedPractitionerRolesCache.some(r => extractResourceTargetId(r.id) === roleId)) {
+                missingRoleIds.add(roleId);
+            }
+        }
+    });
+
+    if (missingRoleIds.size === 0) return;
+
+    const fetchPromises = Array.from(missingRoleIds).map(async (roleId) => {
+        try {
+            const response = await fetchWithTimeout(`${serverUrl}/PractitionerRole/${roleId}`, {
+                headers: { 'Accept': 'application/fhir+json, application/json' },
+                timeout: FETCH_TIMEOUT_MS
+            });
+            if (response.ok) {
+                const r = await response.json();
+                if (r && r.id) {
+                    const orgRef = r.organization ? r.organization.reference : '';
+                    const pracRef = r.practitioner ? r.practitioner.reference : '';
+                    const coding = (r.code && r.code[0] && r.code[0].coding && r.code[0].coding[0]) ? r.code[0].coding[0] : {};
+                    const roleDisplay = coding.display || 'PractitionerRole';
+                    const displayStr = `${roleDisplay} (Role ID: ${r.id}${orgRef ? ' | ' + getOrgNameById(orgRef) : ''})`;
+
+                    if (!loadedPractitionerRolesCache.some(item => extractResourceTargetId(item.id) === extractResourceTargetId(r.id))) {
+                        loadedPractitionerRolesCache.push({ id: r.id, display: displayStr, orgRef, pracRef });
+                    }
+                }
+            }
+        } catch (err) {
+            console.warn(`Could not fetch missing PractitionerRole ${roleId}:`, err.message);
+        }
+    });
+
+    await Promise.all(fetchPromises);
+    reResolveReferralRoleOrganizations();
+}
+
+/**
  * Fetch and Render e-Referrals Directory
  */
 async function fetchAndRenderReferrals() {
@@ -1342,7 +1493,7 @@ async function fetchAndRenderReferrals() {
     try {
         if (statusEl) statusEl.textContent = `Fetching e-Referrals list from ${serverUrl}...`;
 
-        const entries = await fetchAllFhirResources('ServiceRequest', serverUrl, statusEl);
+        const entries = await fetchAllFhirResources('ServiceRequest?_sort=-_lastUpdated', serverUrl, statusEl, 30);
 
         if (entries.length === 0) {
             renderFallbackReferralsTable('No e-Referral ServiceRequests found on server. Displaying sample list.');
@@ -1373,6 +1524,21 @@ async function fetchAndRenderReferrals() {
                 });
             }
 
+            if (!perfOrgRef && perfRoleRef) {
+                perfOrgRef = getOrgRefFromRoleRef(perfRoleRef);
+            }
+
+            let sendOrgRef = '';
+            let sendRoleRef = '';
+            if (reqRef.startsWith('Organization/')) {
+                sendOrgRef = reqRef;
+            } else if (reqRef.startsWith('PractitionerRole/')) {
+                sendRoleRef = reqRef;
+                sendOrgRef = getOrgRefFromRoleRef(reqRef) || reqRef;
+            } else if (reqRef) {
+                sendOrgRef = reqRef;
+            }
+
             let ccText = '';
             let codeVal = 'I10';
             let codeDisp = 'Essential hypertension';
@@ -1396,14 +1562,17 @@ async function fetchAndRenderReferrals() {
             }
 
             const encRef = r.encounter ? r.encounter.reference : '';
+            const authoredOn = r.authoredOn || '';
+            const lastUpdated = (r.meta && r.meta.lastUpdated) ? r.meta.lastUpdated : authoredOn;
+            const timestamp = authoredOn || lastUpdated || '';
 
             return {
                 id: r.id,
                 patientRef: pRef,
                 patientName: pName,
                 encounterRef: encRef,
-                sendingOrgRef: reqRef,
-                sendingRoleRef: reqRef,
+                sendingOrgRef: sendOrgRef,
+                sendingRoleRef: sendRoleRef,
                 receivingOrgRef: perfOrgRef,
                 receivingRoleRef: perfRoleRef,
                 chiefComplaint: ccText,
@@ -1412,12 +1581,16 @@ async function fetchAndRenderReferrals() {
                 priority: r.priority || 'routine',
                 status: r.status || 'active',
                 note: (r.note && r.note[0]) ? r.note[0].text : '',
-                lastUpdated: (r.meta && r.meta.lastUpdated) ? r.meta.lastUpdated : ''
+                authoredOn: authoredOn,
+                lastUpdated: lastUpdated,
+                timestamp: timestamp,
+                rawResource: r
             };
         });
 
         sortReferralsDescending(loadedReferralsCache);
         applyReferralFilters();
+        fetchMissingRoleOrganizations(loadedReferralsCache);
 
         if (statusEl) statusEl.textContent = `✅ Loaded ${loadedReferralsCache.length} e-Referral(s) (Sorted Descending).`;
     } catch (err) {
@@ -1442,9 +1615,14 @@ function sortReferralsDescending(rolesArray) {
     if (!rolesArray || !Array.isArray(rolesArray)) return;
 
     rolesArray.sort((a, b) => {
-        const timeA = a.lastUpdated ? new Date(a.lastUpdated).getTime() : 0;
-        const timeB = b.lastUpdated ? new Date(b.lastUpdated).getTime() : 0;
-        if (timeA !== timeB && timeA > 0 && timeB > 0) return timeB - timeA;
+        const timeAStr = a.timestamp || a.authoredOn || a.lastUpdated;
+        const timeBStr = b.timestamp || b.authoredOn || b.lastUpdated;
+        const timeA = timeAStr ? new Date(timeAStr).getTime() : 0;
+        const timeB = timeBStr ? new Date(timeBStr).getTime() : 0;
+
+        if (timeA !== timeB && !isNaN(timeA) && !isNaN(timeB) && timeA > 0 && timeB > 0) {
+            return timeB - timeA;
+        }
 
         const idA = (a.id || '').toString();
         const idB = (b.id || '').toString();
@@ -1516,6 +1694,8 @@ function applyReferralFilters() {
     const orgFilter = (document.getElementById('filterRoleOrganization')?.value || '').trim().toLowerCase();
     const priorityFilter = document.getElementById('filterPriority')?.value || '';
 
+    const targetOrgFilter = extractResourceTargetId(orgFilter);
+
     filteredReferralsCache = loadedReferralsCache.filter(ref => {
         const id = (ref.id || '').toLowerCase();
         const patientRef = (ref.patientRef || '').toLowerCase();
@@ -1525,24 +1705,39 @@ function applyReferralFilters() {
         const ccText = (ref.chiefComplaint || '').toLowerCase();
         const icd = (ref.icdCode || '').toLowerCase();
         const icdDisp = (ref.icdDisplay || '').toLowerCase();
+        const timeStr = (ref.timestamp || ref.authoredOn || ref.lastUpdated || '').toLowerCase();
 
         // 1. Tab Filtering (Inbox vs Outbox vs All)
+        const recvOrgId = extractResourceTargetId(ref.receivingOrgRef);
+        const recvRoleOrgRef = getOrgRefFromRoleRef(ref.receivingRoleRef);
+        const recvRoleOrgId = extractResourceTargetId(recvRoleOrgRef);
+        const matchesRecvOrg = !targetOrgFilter || 
+            (recvOrgId === targetOrgFilter) || 
+            (recvRoleOrgId === targetOrgFilter) || 
+            (ref.receivingOrgRef || '').toLowerCase().includes(orgFilter) || 
+            (ref.receivingRoleRef || '').toLowerCase().includes(orgFilter);
+
+        const sendOrgId = extractResourceTargetId(ref.sendingOrgRef);
+        const sendRoleOrgRef = getOrgRefFromRoleRef(ref.sendingRoleRef || ref.sendingOrgRef);
+        const sendRoleOrgId = extractResourceTargetId(sendRoleOrgRef);
+        const matchesSendOrg = !targetOrgFilter || 
+            (sendOrgId === targetOrgFilter) || 
+            (sendRoleOrgId === targetOrgFilter) || 
+            (ref.sendingOrgRef || '').toLowerCase().includes(orgFilter) || 
+            (ref.sendingRoleRef || '').toLowerCase().includes(orgFilter);
+
         if (currentDirectoryTab === 'inbox') {
-            if (orgFilter) {
-                if (!recvOrgRef.includes(orgFilter)) return false;
-            }
+            if (orgFilter && !matchesRecvOrg) return false;
         } else if (currentDirectoryTab === 'outbox') {
-            if (orgFilter) {
-                if (!sendOrgRef.includes(orgFilter)) return false;
-            }
+            if (orgFilter && !matchesSendOrg) return false;
         } else {
-            if (orgFilter && !sendOrgRef.includes(orgFilter) && !recvOrgRef.includes(orgFilter)) {
+            if (orgFilter && !matchesRecvOrg && !matchesSendOrg) {
                 return false;
             }
         }
 
         // 2. Search Filter
-        if (searchFilter && !id.includes(searchFilter) && !patientRef.includes(searchFilter) && !patientName.includes(searchFilter) && !ccText.includes(searchFilter) && !icd.includes(searchFilter) && !icdDisp.includes(searchFilter)) {
+        if (searchFilter && !id.includes(searchFilter) && !patientRef.includes(searchFilter) && !patientName.includes(searchFilter) && !ccText.includes(searchFilter) && !icd.includes(searchFilter) && !icdDisp.includes(searchFilter) && !timeStr.includes(searchFilter)) {
             return false;
         }
 
@@ -1627,7 +1822,7 @@ function renderReferralsTable(referrals) {
     if (!tbody) return;
 
     if (!referrals || referrals.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No matching e-Referrals found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" class="text-center">No matching e-Referrals found.</td></tr>';
         return;
     }
 
@@ -1643,6 +1838,7 @@ function renderReferralsTable(referrals) {
         }
         const sendOrg = getOrgNameById(ref.sendingOrgRef);
         const recvOrg = getOrgNameById(ref.receivingOrgRef);
+        const timestampHtml = formatReferralTimestamp(ref.timestamp || ref.authoredOn || ref.lastUpdated);
 
         const ccHtml = ref.chiefComplaint ? `<div style="font-weight:600; color:#0f172a; margin-bottom:0.15rem;">🗣️ ${ref.chiefComplaint}</div>` : '';
         const icdHtml = `<div style="font-size:0.82rem; color:#475569;">🩺 <code>${ref.icdCode}</code> - ${ref.icdDisplay}</div>`;
@@ -1661,6 +1857,7 @@ function renderReferralsTable(referrals) {
         html += `
             <tr>
                 <td><code>${id}</code></td>
+                <td>${timestampHtml}</td>
                 <td><strong>${pName}</strong><br><small style="color:var(--muted-text);">${ref.patientRef}</small></td>
                 <td>${sendOrg}</td>
                 <td>${recvOrg}</td>
@@ -1853,7 +2050,104 @@ function viewReferralJson(referralId) {
         alert('Referral record not found.');
         return;
     }
-    alert(`e-Referral Record JSON (ID: ${referralId}):\n\n` + JSON.stringify(ref, null, 2));
+
+    let serviceRequestJson = ref.rawResource;
+
+    if (!serviceRequestJson) {
+        const performers = [];
+        if (ref.receivingOrgRef) performers.push({ "reference": ref.receivingOrgRef });
+        if (ref.receivingRoleRef) performers.push({ "reference": ref.receivingRoleRef });
+
+        const reqRef = ref.sendingRoleRef || ref.sendingOrgRef || 'Organization/PGH-ORG-001';
+
+        serviceRequestJson = {
+            "resourceType": "ServiceRequest",
+            "id": ref.id,
+            "meta": {
+                "versionId": "1",
+                "lastUpdated": ref.lastUpdated || new Date().toISOString(),
+                "profile": [
+                    "https://www.fhir.doh.gov.ph/pheref/StructureDefinition/ereferral-service-request"
+                ]
+            },
+            "requisition": {
+                "system": "http://fhir.doh.gov.ph/NamingSystem/ph-ereferral-number",
+                "value": ref.requisition || `REF-${ref.id}`
+            },
+            "status": ref.status || "active",
+            "intent": "order",
+            "category": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": "440655000",
+                            "display": "Outpatient"
+                        }
+                    ],
+                    "text": "Outpatient"
+                }
+            ],
+            "code": {
+                "text": "Consultation"
+            },
+            "subject": {
+                "reference": ref.patientRef || "Patient/1001"
+            },
+            "encounter": {
+                "reference": ref.encounterRef || `Encounter/${ref.id}-ENC`
+            },
+            "authoredOn": ref.lastUpdated || new Date().toISOString(),
+            "requester": {
+                "reference": reqRef
+            },
+            "performer": performers.length > 0 ? performers : [{ "reference": "Organization/SLMC-ORG-002" }],
+            "reasonCode": [
+                {
+                    "coding": [
+                        {
+                            "system": "http://snomed.info/sct",
+                            "code": ref.icdCode || "I10",
+                            "display": ref.icdDisplay || "Essential hypertension"
+                        }
+                    ],
+                    "text": ref.chiefComplaint ? `${ref.chiefComplaint} (ICD-10: ${ref.icdCode || 'I10'} - ${ref.icdDisplay || 'Essential hypertension'})` : (ref.icdDisplay || "Essential hypertension")
+                }
+            ]
+        };
+
+        if (ref.note || ref.statusRemarks) {
+            serviceRequestJson["note"] = [{ "text": ref.statusRemarks || ref.note }];
+        }
+    }
+
+    const modalEl = document.getElementById('referralJsonModal');
+    const modalCodeEl = document.getElementById('modalReferralJsonCode');
+    const modalTitleEl = document.getElementById('modalReferralJsonTitle');
+
+    if (modalEl && modalCodeEl) {
+        if (modalTitleEl) modalTitleEl.textContent = `📄 ServiceRequest FHIR Resource JSON (ID: ${ref.id})`;
+        modalCodeEl.textContent = JSON.stringify(serviceRequestJson, null, 2);
+        modalEl.style.display = 'flex';
+        currentSelectedModalRef = serviceRequestJson;
+    } else {
+        alert(`e-Referral ServiceRequest FHIR Resource JSON (ID: ${referralId}):\n\n` + JSON.stringify(serviceRequestJson, null, 2));
+    }
+}
+
+function closeReferralJsonModal() {
+    const modalEl = document.getElementById('referralJsonModal');
+    if (modalEl) modalEl.style.display = 'none';
+}
+
+function copyReferralJsonModalText() {
+    const codeEl = document.getElementById('modalReferralJsonCode');
+    if (!codeEl) return;
+    navigator.clipboard.writeText(codeEl.textContent).then(() => {
+        alert('ServiceRequest FHIR Resource JSON copied to clipboard!');
+    }).catch(err => {
+        alert('Failed to copy JSON: ' + err.message);
+    });
 }
 
 // Copy JSON to clipboard

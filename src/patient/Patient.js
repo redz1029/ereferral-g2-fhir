@@ -15,16 +15,16 @@
     const EXTENSION_URLS = {
 
         region:
-            "https://fhir.doh.gov.ph/phcore/StructureDefinition/region",
+            "https://www.fhir.doh.gov.ph/phcore/StructureDefinition/region",
 
         province:
-            "https://fhir.doh.gov.ph/phcore/StructureDefinition/province",
+            "https://www.fhir.doh.gov.ph/phcore/StructureDefinition/province",
 
         municipality:
-            "https://fhir.doh.gov.ph/phcore/StructureDefinition/city-municipality",
+            "https://www.fhir.doh.gov.ph/phcore/StructureDefinition/city-municipality",
 
         barangay:
-            "https://fhir.doh.gov.ph/phcore/StructureDefinition/barangay"
+            "https://www.fhir.doh.gov.ph/phcore/StructureDefinition/barangay"
 
     };
 

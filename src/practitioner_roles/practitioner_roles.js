@@ -833,7 +833,7 @@ function buildPractitionerRoleJSON() {
         "resourceType": "PractitionerRole",
         "meta": {
             "profile": [
-                "https://fhir.doh.gov.ph/pheref/StructureDefinition/ereferral-practitioner-role"
+                "https://www.fhir.doh.gov.ph/pheref/StructureDefinition/ereferral-practitioner-role"
             ]
         },
         "identifier": [
