@@ -29,7 +29,10 @@
         .getElementById("btn-patient")
         .addEventListener(
             "click",
-            loadPatients
+            function (event) {
+                event.preventDefault();
+                loadPatients();
+            }
         );
 
 
