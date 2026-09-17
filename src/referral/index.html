@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>e-Referral Management - e-Referral Group 2 FHIR</title>
+
+    <!-- jQuery & Select2 CSS / JS CDN -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --nav-bg: #ffffff;
+            --text-color: #1e293b;
+            --border-color: #cbd5e1;
+            --card-bg: #ffffff;
+            --code-bg: #0f172a;
+            --code-color: #38bdf8;
+            --success-bg: #dcfce7;
+            --success-color: #166534;
+            --muted-text: #64748b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        header {
+            background-color: var(--nav-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+        }
+
+        .header-container {
+            max-width: 1400px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        h1 {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: var(--text-color);
+        }
+
+        nav {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .nav-btn {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            padding: 0.45rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 500;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.2s ease;
+        }
+
+        .nav-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .nav-btn-secondary {
+            background-color: #ffffff;
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
+        }
+
+        .nav-btn-secondary:hover {
+            background-color: #f1f5f9;
+        }
+
+        main {
+            max-width: 1400px;
+            margin: 1.5rem auto;
+            padding: 0 1.5rem;
+        }
+
+        .grid-2col {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 992px) {
+            .grid-2col {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+            min-width: 0;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .form-group {
+            margin-bottom: 0.85rem;
+            min-width: 0;
+        }
+
+        label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 0.25rem;
+        }
+
+        .form-control {
+            width: 100%;
+            max-width: 100%;
+            padding: 0.45rem 0.6rem;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            font-size: 0.9rem;
+            background-color: #ffffff;
+            box-sizing: border-box;
+            text-overflow: ellipsis;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+        }
+
+        /* Select2 Custom Styles & Strict Overflow Truncation */
+        .select2-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box;
+            min-width: 0;
+        }
+
+        .select2-container--default .select2-selection--single {
+            height: 38px;
+            border: 1px solid var(--border-color);
+            border-radius: 0.375rem;
+            padding: 4px 8px;
+            max-width: 100%;
+            box-sizing: border-box;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 28px;
+            color: var(--text-color);
+            font-size: 0.9rem;
+            overflow: hidden !important;
+            text-overflow: ellipsis !important;
+            white-space: nowrap !important;
+            max-width: 100% !important;
+            display: block;
+            padding-right: 20px !important;
+            box-sizing: border-box;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            height: 36px;
+        }
+
+        .select2-results__option {
+            white-space: normal !important;
+            word-break: break-word !important;
+        }
+
+        .btn-submit {
+            width: 100%;
+            background-color: #059669;
+            color: white;
+            border: none;
+            padding: 0.65rem 1rem;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            margin-top: 0.5rem;
+        }
+
+        .btn-submit:hover {
+            background-color: #047857;
+        }
+
+        /* Directory Tab Styles */
+        .btn-tab {
+            background-color: #f1f5f9;
+            color: #475569;
+            border: 1px solid var(--border-color);
+            padding: 0.45rem 1rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-radius: 0.375rem 0.375rem 0 0;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .btn-tab:hover {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+
+        .btn-tab.active {
+            background-color: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        /* Modal Dialog Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            border-radius: 0.75rem;
+            width: 100%;
+            max-width: 820px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            overflow: hidden;
+            animation: modalFadeIn 0.25s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            padding: 0.85rem 1.25rem;
+            background: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h3 {
+            margin: 0;
+            font-size: 1.15rem;
+            font-weight: 600;
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+        }
+
+        .modal-close:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .modal-body {
+            padding: 1.25rem;
+            overflow-y: auto;
+            font-size: 0.9rem;
+        }
+
+        .modal-footer {
+            padding: 0.75rem 1.25rem;
+            background: #f8fafc;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .detail-section {
+            background: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+            padding: 0.85rem;
+            margin-bottom: 0.85rem;
+        }
+
+        .detail-section-title {
+            font-weight: 600;
+            font-size: 0.88rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 0.25rem;
+        }
+
+        .btn-small {
+            background-color: #f1f5f9;
+            color: #334155;
+            border: 1px solid var(--border-color);
+            padding: 0.3rem 0.6rem;
+            font-size: 0.8rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+        }
+
+        .btn-small:hover {
+            background-color: #e2e8f0;
+        }
+
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-color);
+            padding: 1rem;
+            border-radius: 0.375rem;
+            overflow-x: auto;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 0.82rem;
+            max-height: 520px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .status-badge {
+            display: inline-block;
+            font-size: 0.78rem;
+            padding: 0.2rem 0.5rem;
+            border-radius: 0.25rem;
+            background: #e2e8f0;
+            color: #334155;
+        }
+
+        .success-message {
+            background-color: var(--success-bg);
+            color: var(--success-color);
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.88rem;
+            margin-top: 0.75rem;
+            border: 1px solid #bbf7d0;
+        }
+
+        .info-message {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.88rem;
+            margin-top: 0.75rem;
+            border: 1px solid #bae6fd;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.5rem;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 0.55rem 0.6rem;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.85rem;
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.15rem 0.45rem;
+            font-size: 0.75rem;
+            border-radius: 0.25rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-danger {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .section-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <h1>e-Referral Group 2 FHIR</h1>
+            <nav aria-label="Main Navigation">
+                <a href="../../index.html" class="nav-btn nav-btn-secondary">← Back to Home</a>
+                <a href="../../index.html" class="nav-btn">Patient</a>
+                <a href="../Organization/OrganizationView.html" class="nav-btn">Organization</a>
+                <a href="../practitioner/PractitionerView.html" class="nav-btn">Practitioner</a>
+                <a href="../practitioner_roles/index.html" class="nav-btn">Practitioner Roles</a>
+                <a href="index.html" class="nav-btn" style="background-color: var(--primary-hover);">e-Referral</a>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <!-- Server Connection Bar -->
+        <div class="card" style="margin-bottom: 1.5rem; background: #ffffff;">
+            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                <label for="fhirServerUrl" style="font-weight: 600; margin-bottom: 0;">🌐 FHIR Server Endpoint:</label>
+                <div style="flex: 1; min-width: 280px;">
+                    <input type="url" id="fhirServerUrl" class="form-control" value="https://cdr.pheref.fhirlab.net/fhir" placeholder="https://cdr.pheref.fhirlab.net/fhir">
+                </div>
+                <div style="display: flex; gap: 0.5rem;">
+                    <select id="serverPresetSelect" class="form-control" style="width: auto;">
+                        <option value="https://cdr.pheref.fhirlab.net/fhir">DOH eReferral FHIR CDR (https://cdr.pheref.fhirlab.net/fhir)</option>
+                        <option value="https://hapi.fhir.org/baseR4">HAPI FHIR Public R4 (https://hapi.fhir.org/baseR4)</option>
+                    </select>
+                    <button type="button" class="btn-small" onclick="fetchPatients(); fetchOrganizations(); fetchPractitionerRoles(); fetchAndRenderReferrals();">🔌 Test Connection</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="section-title">
+            <span>📋 e-Referral Form Generator (Philippine PHeReF Standard)</span>
+            <button type="button" class="btn-small" onclick="resetEreferralForm()">🔄 Reset Form</button>
+        </div>
+
+        <!-- Upper 2-Column Split View -->
+        <div class="grid-2col">
+            <!-- Left Column: e-Referral Form -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">e-Referral Request Details</h3>
+                </div>
+
+                <form id="ereferralForm">
+                    <!-- Patient Select -->
+                    <div class="form-group">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                            <label for="patientSelect" style="margin-bottom: 0; font-weight: 600;">👤 Patient</label>
+                            <button type="button" class="btn-small" onclick="fetchPatients()" title="Refresh Patients">↻ Refresh</button>
+                        </div>
+                        <select id="patientSelect" class="form-control">
+                            <option value="">-- Select Patient --</option>
+                        </select>
+                        <span id="patientFetchStatus" class="status-badge" style="margin-top:0.2rem;">Click Refresh to load Patients.</span>
+                    </div>
+
+                    <!-- Sending Organization & PractitionerRole -->
+                    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem;">
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <label for="sendingOrgSelect" style="margin-bottom: 0; font-weight: 600;">🏥 Where From (Sending Facility)</label>
+                            </div>
+                            <select id="sendingOrgSelect" class="form-control" onchange="onSendingOrgChange()">
+                                <option value="">-- Select Sending Facility --</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <label for="sendingRoleSelect" style="margin-bottom: 0; font-weight: 600;">👨‍⚕️ Sending PractitionerRole</label>
+                            </div>
+                            <select id="sendingRoleSelect" class="form-control">
+                                <option value="">-- Select PractitionerRole --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Receiving Organization & PractitionerRole -->
+                    <div style="display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 0.75rem;">
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <label for="receivingOrgSelect" style="margin-bottom: 0; font-weight: 600;">🏥 Where To (Receiving Facility)</label>
+                                <button type="button" class="btn-small" onclick="fetchOrganizations()" title="Refresh Organizations">↻ Refresh</button>
+                            </div>
+                            <select id="receivingOrgSelect" class="form-control" onchange="onReceivingOrgChange()">
+                                <option value="">-- Select Receiving Facility --</option>
+                            </select>
+                            <span id="orgFetchStatus" class="status-badge" style="margin-top:0.2rem;">Click Refresh to load Facilities.</span>
+                        </div>
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+                                <label for="receivingRoleSelect" style="margin-bottom: 0; font-weight: 600;">👨‍⚕️ Receiving PractitionerRole (Optional)</label>
+                            </div>
+                            <select id="receivingRoleSelect" class="form-control">
+                                <option value="">-- Select Receiving PractitionerRole --</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Chief Complaint -->
+                    <div class="form-group">
+                        <label for="chiefComplaint" style="margin-bottom: 0.35rem; font-weight: 600;">🗣️ Chief Complaint / Main Reason for Referral</label>
+                        <input type="text" id="chiefComplaint" class="form-control" value="Persistent high fever and severe headache for 3 days" placeholder="e.g. Severe chest pain, persistent high fever for 3 days">
+                    </div>
+
+                    <!-- ICD-10 Diagnosis -->
+                    <div class="form-group">
+                        <label for="icdSelect" style="margin-bottom: 0.35rem; font-weight: 600;">🩺 Reason for Referral / Diagnosis (ICD-10 Code)</label>
+                        <select id="icdSelect" class="form-control">
+                            <option value="I10" data-display="Essential (primary) hypertension" selected>I10 - Essential (primary) hypertension</option>
+                            <option value="A09" data-display="Infectious gastroenteritis and colitis">A09 - Infectious gastroenteritis and colitis</option>
+                            <option value="J18.9" data-display="Pneumonia, unspecified organism">J18.9 - Pneumonia, unspecified organism</option>
+                            <option value="E11.9" data-display="Type 2 diabetes mellitus without complications">E11.9 - Type 2 diabetes mellitus</option>
+                            <option value="J44.9" data-display="Chronic obstructive pulmonary disease, unspecified">J44.9 - Chronic obstructive pulmonary disease (COPD)</option>
+                            <option value="K35.80" data-display="Unspecified acute appendicitis">K35.80 - Acute appendicitis</option>
+                            <option value="O80" data-display="Encounter for full-term uncomplicated delivery">O80 - Encounter for full-term delivery</option>
+                            <option value="N39.0" data-display="Urinary tract infection, site not specified">N39.0 - Urinary tract infection (UTI)</option>
+                            <option value="R50.9" data-display="Fever, unspecified">R50.9 - Fever, unspecified</option>
+                            <option value="custom" data-display="Custom ICD-10">Custom ICD-10 Code...</option>
+                        </select>
+                    </div>
+
+                    <!-- Custom ICD-10 Container (hidden unless 'custom' is selected) -->
+                    <div id="customIcdContainer" style="display: none; grid-template-columns: 1fr 1.5fr; gap: 0.75rem; margin-bottom: 0.85rem;">
+                        <div class="form-group">
+                            <label for="icdCode">Custom ICD-10 Code</label>
+                            <input type="text" id="icdCode" class="form-control" value="I10" placeholder="e.g. I10">
+                        </div>
+                        <div class="form-group">
+                            <label for="icdDisplay">Custom ICD-10 Display</label>
+                            <input type="text" id="icdDisplay" class="form-control" value="Essential (primary) hypertension" placeholder="e.g. Essential hypertension">
+                        </div>
+                    </div>
+
+                    <!-- Vital Signs Section (Observations) -->
+                    <div style="background: #f8fafc; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color); margin-bottom: 0.85rem;">
+                        <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--primary-color);">📊 Vital Signs Observations (LOINC Coded)</label>
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.5rem;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="vitalTemp" style="font-size:0.78rem;">Temp (°C)</label>
+                                <input type="number" step="0.1" id="vitalTemp" class="form-control" placeholder="36.5" value="36.8">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="vitalHr" style="font-size:0.78rem;">Heart Rate (bpm)</label>
+                                <input type="number" id="vitalHr" class="form-control" placeholder="75" value="78">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="vitalRr" style="font-size:0.78rem;">Resp Rate (bpm)</label>
+                                <input type="number" id="vitalRr" class="form-control" placeholder="18" value="18">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="vitalBpSys" style="font-size:0.78rem;">BP Systolic</label>
+                                <input type="number" id="vitalBpSys" class="form-control" placeholder="120" value="130">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="vitalBpDia" style="font-size:0.78rem;">BP Diastolic</label>
+                                <input type="number" id="vitalBpDia" class="form-control" placeholder="80" value="85">
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="vitalSpo2" style="font-size:0.78rem;">SpO2 (%)</label>
+                                <input type="number" id="vitalSpo2" class="form-control" placeholder="98" value="98">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Referral Category & Priority -->
+                    <div style="display: grid; grid-template-columns: 1fr 140px; gap: 0.75rem; margin-bottom: 0.75rem;">
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="categorySelect" style="font-weight:600;">🏷️ Referral Category (servicerequest-category)</label>
+                            <select id="categorySelect" class="form-control">
+                                <option value="440655000" data-display="Outpatient environment" selected>440655000 - Outpatient Environment / Consultation</option>
+                                <option value="73770003" data-display="Emergency department">73770003 - Emergency Department / Urgent Transfer</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin-bottom:0;">
+                            <label for="referralPriority" style="font-weight:600;">⚡ Priority</label>
+                            <select id="referralPriority" class="form-control">
+                                <option value="routine" selected>routine</option>
+                                <option value="urgent">urgent</option>
+                                <option value="asap">asap</option>
+                                <option value="stat">stat (Emergency)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Associated Encounter Section (FHIR Encounter Resource) -->
+                    <div style="background: #f8fafc; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color); margin-bottom: 0.85rem;">
+                        <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--primary-color);">🏥 Associated Clinical Encounter (ActCode)</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="encounterClassSelect" style="font-size:0.78rem;">Encounter Class</label>
+                                <select id="encounterClassSelect" class="form-control">
+                                    <option value="AMB" data-display="ambulatory" selected>AMB - Ambulatory / Outpatient</option>
+                                    <option value="EMER" data-display="emergency">EMER - Emergency Department</option>
+                                    <option value="IMP" data-display="inpatient encounter">IMP - Inpatient / Hospital Stay</option>
+                                    <option value="HH" data-display="home health">HH - Home Health Visit</option>
+                                    <option value="VR" data-display="virtual">VR - Virtual / Telemedicine</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="encounterStatusSelect" style="font-size:0.78rem;">Encounter Status</label>
+                                <select id="encounterStatusSelect" class="form-control">
+                                    <option value="finished" selected>finished (Completed)</option>
+                                    <option value="in-progress">in-progress (Active)</option>
+                                    <option value="arrived">arrived (Patient Arrived)</option>
+                                    <option value="planned">planned (Scheduled)</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Disability Status / PWD Info (FHIR Coded LOINC 8479-3) -->
+                    <div style="background: #f8fafc; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color); margin-bottom: 0.85rem;">
+                        <label style="font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--primary-color);">♿ Disability Status / Special Accommodations (LOINC 8479-3)</label>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="disabilitySelect" style="font-size:0.78rem;">Disability Classification</label>
+                                <select id="disabilitySelect" class="form-control">
+                                    <option value="none" data-code="none" selected>None / Non-PWD</option>
+                                    <option value="visual" data-code="397540003" data-display="Visual impairment">Visual Impairment</option>
+                                    <option value="hearing" data-code="15188001" data-display="Hearing impairment">Hearing Impairment</option>
+                                    <option value="speech" data-code="29164008" data-display="Speech impairment">Speech / Communication Impairment</option>
+                                    <option value="physical" data-code="267022002" data-display="Physical disability">Physical / Mobility Disability</option>
+                                    <option value="mental" data-code="31070006" data-display="Mental disability">Mental / Psychosocial Disability</option>
+                                    <option value="intellectual" data-code="224960004" data-display="Intellectual disability">Intellectual / Learning Disability</option>
+                                    <option value="chronic" data-code="27624003" data-display="Chronic illness disability">Disability due to Chronic Illness</option>
+                                    <option value="multiple" data-code="373950006" data-display="Multiple disabilities">Multiple Disabilities</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="margin-bottom:0;">
+                                <label for="disabilityNotes" style="font-size:0.78rem;">Accommodations Required</label>
+                                <input type="text" id="disabilityNotes" class="form-control" placeholder="e.g. Wheelchair assistance required">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="referralNote" style="font-weight:600;">Clinical Summary / Referral Note</label>
+                        <input type="text" id="referralNote" class="form-control" value="Patient requires specialized medical evaluation and follow-up." placeholder="e.g. Clinical summary and reason for transfer">
+                    </div>
+
+                    <!-- Submit Action Button -->
+                    <button type="submit" class="btn-submit">🚀 Submit & Bulk Save e-Referral (FHIR Transaction Bundle)</button>
+                </form>
+
+                <div id="submissionResult" style="display:none;"></div>
+            </div>
+
+            <!-- Right Column: Live FHIR Transaction Bundle Preview -->
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">Generated e-Referral FHIR Transaction Bundle JSON</h3>
+                    <div style="display:flex; gap:0.5rem;">
+                        <button type="button" class="btn-small" onclick="copyJsonPreview()">📋 Copy JSON</button>
+                        <button type="button" class="btn-small" onclick="downloadJsonFile()">💾 Download File</button>
+                    </div>
+                </div>
+
+                <p style="font-size:0.82rem; color:var(--muted-text); margin-bottom:0.5rem;">
+                    This real-time preview constructs a complete <strong>FHIR Transaction Bundle</strong> combining the <code>ServiceRequest</code> e-Referral and LOINC <code>Observation</code> vital signs entries.
+                </p>
+
+                <pre><code id="jsonPreview">Generating FHIR Transaction Bundle JSON preview...</code></pre>
+            </div>
+        </div>
+
+        <!-- ===================================================================
+             BOTTOM SECTION: e-REFERRALS DIRECTORY TABLE
+             =================================================================== -->
+        <div id="referralsDirectoryCard" class="card" style="margin-top: 1.5rem;">
+            <div class="card-header">
+                <h3 class="card-title">📁 e-Referrals Directory (Descending Order)</h3>
+                <div style="display:flex; gap:0.5rem;">
+                    <button type="button" class="btn-small" onclick="fetchAndRenderReferrals()">↻ Refresh Directory</button>
+                </div>
+            </div>
+            <span id="referralsListStatus" class="status-badge" style="margin-bottom: 1rem;">Loading e-Referrals...</span>
+
+            <!-- Directory Tab Bar (All / Inbox / Outbox) -->
+            <div style="display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 2px solid var(--border-color); padding-bottom: 0.5rem; flex-wrap: wrap;">
+                <button type="button" class="btn-tab active" id="tab-all" onclick="setDirectoryTab('all')">📋 All Referrals</button>
+                <button type="button" class="btn-tab" id="tab-inbox" onclick="setDirectoryTab('inbox')">📥 Inbox (Incoming Referrals)</button>
+                <button type="button" class="btn-tab" id="tab-outbox" onclick="setDirectoryTab('outbox')">📤 Outbox (Outgoing Referrals)</button>
+            </div>
+
+            <!-- Filter Bar -->
+            <div class="filter-bar" style="display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1rem; align-items: flex-end; background: #f8fafc; padding: 0.75rem; border-radius: 0.375rem; border: 1px solid var(--border-color);">
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.2rem;">Search Patient / Referral ID / Diagnosis</label>
+                    <input type="text" id="filterSearch" class="form-control" placeholder="Search..." oninput="applyReferralFilters()">
+                </div>
+
+                <div style="flex: 1; min-width: 180px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.2rem;">Filter Facility / Organization</label>
+                    <select id="filterRoleOrganization" class="form-control" onchange="applyReferralFilters()">
+                        <option value="">All Organizations</option>
+                    </select>
+                </div>
+
+                <div style="width: 130px;">
+                    <label style="font-size: 0.8rem; font-weight: 600; display: block; margin-bottom: 0.2rem;">Priority</label>
+                    <select id="filterPriority" class="form-control" onchange="applyReferralFilters()">
+                        <option value="">All Priorities</option>
+                        <option value="routine">Routine</option>
+                        <option value="urgent">Urgent</option>
+                        <option value="asap">ASAP</option>
+                        <option value="stat">STAT</option>
+                    </select>
+                </div>
+
+                <div>
+                    <button type="button" class="btn-small" onclick="clearReferralFilters()">🧹 Clear</button>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Referral ID</th>
+                            <th>Patient</th>
+                            <th>Where From (Sending)</th>
+                            <th>Where To (Receiving)</th>
+                            <th>Chief Complaint & Diagnosis</th>
+                            <th>Priority</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="referralsListTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center">Loading e-Referrals directory...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Interactive Pagination Bar -->
+            <div class="pagination-bar" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-top: 1rem; padding-top: 0.75rem; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: var(--muted-text);">
+                    <label for="referralPageSize">Show</label>
+                    <select id="referralPageSize" class="form-control" style="width: 70px; padding: 0.3rem;" onchange="changeReferralPageSize(this.value)">
+                        <option value="5" selected>5</option>
+                        <option value="10">10</option>
+                        <option value="25">25</option>
+                        <option value="50">50</option>
+                    </select>
+                    <span>entries per page</span>
+                </div>
+
+                <div id="referralPaginationInfo" style="font-size: 0.85rem; color: var(--muted-text);">
+                    Showing 0 to 0 of 0 entries
+                </div>
+
+                <div id="referralPaginationButtons" style="display: flex; gap: 0.25rem;">
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- View Details Modal Dialog -->
+    <div id="referralDetailsModal" class="modal-backdrop" style="display:none;" onclick="if(event.target === this) closeReferralDetailsModal();">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3 id="modalReferralTitle">📋 Referral Details</h3>
+                <button type="button" class="modal-close" onclick="closeReferralDetailsModal()">✖</button>
+            </div>
+            <div class="modal-body" id="modalReferralBody">
+                <!-- Content populated dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-small" onclick="copyModalReferralJson()">📋 Copy FHIR JSON</button>
+                <button type="button" class="btn-submit" style="width:auto; margin-top:0;" onclick="closeReferralDetailsModal()">Close Details</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Change Referral Status & Remarks Modal Dialog -->
+    <div id="changeStatusModal" class="modal-backdrop" style="display:none;" onclick="if(event.target === this) closeChangeStatusModal();">
+        <div class="modal-card" style="max-width: 550px;">
+            <div class="modal-header" style="background: #0284c7;">
+                <h3>⚡ Change Referral Status & Remarks</h3>
+                <button type="button" class="modal-close" onclick="closeChangeStatusModal()">✖</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 0.375rem; padding: 0.75rem; margin-bottom: 1rem;">
+                    <div style="font-size: 0.85rem; color: #0369a1;"><strong>Referral ID:</strong> <code id="statusModalRefId">-</code></div>
+                    <div style="font-size: 0.85rem; color: #0369a1; margin-top: 0.25rem;"><strong>Patient Name:</strong> <span id="statusModalPatientName">-</span></div>
+                </div>
+
+                <input type="hidden" id="statusModalTargetRefId" value="" />
+
+                <div class="form-group">
+                    <label for="statusModalSelect" style="font-weight: 600;">⚡ Select New FHIR Referral Status</label>
+                    <select id="statusModalSelect" class="form-control" style="font-weight: 600;">
+                        <option value="active">🟢 active (Active / Ready for Action)</option>
+                        <option value="completed">✅ completed (Completed / Closed)</option>
+                        <option value="on-hold">⏸️ on-hold (Temporarily Suspended)</option>
+                        <option value="revoked">❌ revoked (Declined / Cancelled)</option>
+                        <option value="draft">📝 draft (Draft Request)</option>
+                        <option value="entered-in-error">⚠️ entered-in-error (In Error)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="statusModalRemarks" style="font-weight: 600;">💬 Remarks / Reason for Status Change</label>
+                    <textarea id="statusModalRemarks" class="form-control" rows="3" style="white-space: normal;" placeholder="Enter reason or comments for changing referral status (e.g. Patient accepted at receiving facility, referral declined due to lack of ICU bed)..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-small" onclick="closeChangeStatusModal()">Cancel</button>
+                <button type="button" class="btn-submit" style="width: auto; margin-top: 0; background-color: #0284c7;" onclick="confirmReferralStatusChange()">💾 Save Status & Remarks</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="referral.js"></script>
+</body>
+</html>
